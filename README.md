@@ -34,7 +34,7 @@ Example
 
 In this section we present an example showing how the **simsurv** package's main function can be used to simulate survival times based on a joint longitudinal and survival model. (In most instances, simulating survival times from a joint longitudinal and survival model can pose difficulties since time-dependency in the hazard function leads to there not being a general closed form solution to the integral when evaluating the cumulative hazard).
 
-First we define the hazard function to pass to `simsurv`. We will simulate data based on a Weibull proportional hazards regression submodel from a joint longitudinal and survival model with a so-called "current value" association structure, where the hazard at time *t* depends on the expected value of the longitudinal outcome also evaluated at time *t*.
+First we define the hazard function to pass to `simsurv`. This function must be defined by the user and must use three named arguments: `t`, which is the time variable; `x`, which is a data frame with each row containing the covariate values for one individual; `pars`, which is a data frame with each row containing the "true" parameter values for one individual. The function must return the hazard evaluated at time `t`. We will define the hazard function for a Weibull proportional hazards regression submodel from a joint longitudinal and survival model with a so-called "current value" association structure, where the hazard at time *t* depends on the expected value of the longitudinal outcome also evaluated at time *t*.
 
 ``` r
 weibull_ph_hazfn <- function(t, x, pars) {
