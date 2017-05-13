@@ -1,0 +1,26 @@
+Package: simsurv
+Type: Package
+Title: Simulate Complex Survival Data
+Version: 0.0.0
+Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu", 
+             role = c("cre", "aut", "cph")))
+Maintainer: Sam Brilleman <sam.brilleman@monash.edu>
+Description: Simulates survival times from any user-specified hazard function.
+    The hazard function is allowed to be time-dependent, and the resulting
+    cumulative hazard function does not need to have a closed-form solution. 
+    The cumulative hazard is evaluated using Gauss-Kronrod quadrature and 
+    survival times are generated using a combination of the method in Bender 
+    et al. (2005) and Brent's (1973) univariate root finder. Not requiring a 
+    closed form solution to the cumulative hazard function has the benefit that 
+    survival times can be generated for complex models such as joint 
+    longitudinal and survival models; the package documentation provides some 
+    examples of this.
+License: GPL (>=3)
+Depends:
+    R (>= 3.3.2)
+Imports:
+    stats
+Suggests:
+    MASS
+LazyData: true
+RoxygenNote: 6.0.1
