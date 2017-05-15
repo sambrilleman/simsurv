@@ -30,6 +30,7 @@
 #'   the Gauss-Kronrod quadrature.
 #' @param interval The interval over which to search for the
 #'   \code{\link[stats]{uniroot}} corresponding to each simulated event time.
+#' @param ... Other arguments passed to \code{hazfn}.
 #'
 #' @return A data frame a row for each individual, and the following three
 #'   columns:
@@ -107,11 +108,11 @@
 #'
 #'   # Then we simulate the survival times based on the
 #'   # hazard function, covariates, and true parameter values
-#'   s1 <- simsurv(example_hazfn, x = covs, pars = betas, maxt = 10)
+#'   s1 <- simsurv(hazfn = weibull_ph_hazfn, x = covs, pars = betas, maxt = 10)
 #'   head(s1)
 #'
 simsurv <- function(hazfn, x = NULL, pars = NULL, maxt = NULL,
-                    qnodes = 15, interval = c(0, 500), seed = NULL) {
+                    qnodes = 15, interval = c(0, 500), seed = NULL, ...) {
   if (!is.null(seed))
     set.seed(seed)
   if (!is.function(hazfn))
@@ -127,15 +128,15 @@ simsurv <- function(hazfn, x = NULL, pars = NULL, maxt = NULL,
   tt <- sapply(seq(N), function(i) {
     x_i <- if (!is.null(x)) x[i, , drop=FALSE] else NULL
     pars_i <- if (!is.null(pars)) pars[i, , drop=FALSE] else NULL
-    t_i <- try(stats::uniroot(rootfn, hazfn = hazfn, x = x_i, pars = pars_i,
-                              qnodes = qnodes, interval = interval))
-    if (inherits(t_i, "try-error"))
-      stop("Could not evaluate a unique survival time across the specified ",
-           "'interval'. Consider specifying the 'interval' argument such that ",
-           "a unique root can be obtained (by either tightening the interval if ",
-           "multiple solutions are being obtained, or widening the interval if ",
-           "zero solutions are being obtained).", call. = FALSE)
-    return(t_i$root)
+    u_i <- runif(1)
+    # check whether S(t) is still greater than random uniform variable u_i at the
+    # upper limit of uniroot's interval (otherwise uniroot will return an error)
+    at_limit <- rootfn(interval[2], hazfn = hazfn, x = x_i, pars = pars_i,
+                       u = u_i, qnodes = qnodes, ...)
+    t_i <- if (at_limit > 0) interval[2] else
+      stats::uniroot(rootfn, hazfn = hazfn, x = x_i, pars = pars_i,
+                     u = u_i, qnodes = qnodes, ..., interval = interval)$root
+    return(t_i)
   })
   if (!is.null(maxt)) {
     if (maxt <= 0)
@@ -161,16 +162,17 @@ simsurv <- function(hazfn, x = NULL, pars = NULL, maxt = NULL,
 # @param hazfn The user specified hazard function, with named arguments x,
 #   beta, aux
 # @param x Vector of covariate data to be supplied to hazfn
-# @param beta,aux Vectors of parameter values to be supplied to hazfn
-# @param quadnodes Integer specifying the number of quadrature nodes
-rootfn <- function(t, hazfn, x = NULL, pars = NULL, qnodes = 15) {
+# @param pars Vector of parameter values to be supplied to hazfn
+# @param qnodes Integer specifying the number of quadrature nodes
+# @param ... Further arguments passed to hazfn.
+rootfn <- function(t, hazfn, x = NULL, pars = NULL,
+                   u = runif(1), qnodes = 15, ...) {
   qq <- get_quadpoints(qnodes)
   qpts <- lapply(qq$points,  unstandardise_quadpoints,  0, t)
   qwts <- lapply(qq$weights, unstandardise_quadweights, 0, t)
   cumhaz <- sum(sapply(seq(qnodes), function(q) {
-    qwts[[q]] * hazfn(t = qpts[[q]], x = x, pars = pars)
+    qwts[[q]] * hazfn(t = qpts[[q]], x = x, pars = pars, ...)
   }))
-  u <- runif(1)
   return(exp(-cumhaz) - u)
 }
 

@@ -5,7 +5,7 @@
 \title{Simulate survival times from a user-specified hazard function}
 \usage{
 simsurv(hazfn, x = NULL, pars = NULL, maxt = NULL, qnodes = 15,
-  interval = c(0, 500), seed = NULL)
+  interval = c(0, 500), seed = NULL, ...)
 }
 \arguments{
 \item{hazfn}{The user specified hazard function, with named arguments
@@ -29,6 +29,8 @@ the Gauss-Kronrod quadrature.}
 
 \item{interval}{The interval over which to search for the
 \code{\link[stats]{uniroot}} corresponding to each simulated event time.}
+
+\item{...}{Other arguments passed to \code{hazfn}.}
 }
 \value{
 A data frame a row for each individual, and the following three
@@ -110,7 +112,7 @@ an example of this.
 
   # Then we simulate the survival times based on the
   # hazard function, covariates, and true parameter values
-  s1 <- simsurv(example_hazfn, x = covs, pars = betas, maxt = 10)
+  s1 <- simsurv(hazfn = weibull_ph_hazfn, x = covs, pars = betas, maxt = 10)
   head(s1)
 
 }
