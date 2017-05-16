@@ -5,7 +5,7 @@ simsurv
 
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/simsurv)](http://www.r-pkg.org/pkg/simsurv) [![License](https://img.shields.io/badge/License-GPL%20%28%3E=%203%29-brightgreen.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
 
-**simsurv** is an R package that allows the user to simulate survival times from any user-specified hazard function. The hazard function is allowed to be time-dependent, and the resulting cumulative hazard function does not need to have a closed-form solution. The cumulative hazard is evaluated using Gauss-Kronrod quadrature and survival times are generated using a combination of the method in Bender et al. (2005) and Brent's (1973) univariate root finder. Not requiring a closed form solution to the cumulative hazard function has the benefit that survival times can be generated for complex models such as joint longitudinal and survival models; the package documentation provides an example of this.
+**simsurv** is an R package that allows the user to simulate survival times from any user-specified hazard function. The hazard function is allowed to be time-dependent, and the resulting cumulative hazard function does not need to have a closed-form solution. The package is based on the approach described in Crowther and Lambert (2013), whereby the cumulative hazard is evaluated using numerical quadrature and survival times are generated using an iterative algorithm which nests the quadrature-based evaluation of the cumulative hazard inside Brent's (1973) univariate root finder. Not requiring a closed form solution to the cumulative hazard function has the benefit that survival times can be generated for complex models such as joint longitudinal and survival models; the package documentation provides an example of this.
 
 **Note:** Please note that the version available on GitHub is the most up-to-date *development* version of the package. A stable version of the package will be available from CRAN once it is released.
 
@@ -93,12 +93,12 @@ Then we simulate the survival times based on the hazard function (passed to the 
 s1 <- simsurv(hazfn = weibull_ph_hazfn, x = covs, pars = betas, maxt = 10)
 head(s1)
 #>   eventtime status
-#> 1  5.504233      1
-#> 2  5.946418      1
-#> 3  6.618139      1
-#> 4  2.753683      1
-#> 5  3.884597      1
-#> 6  9.295474      1
+#> 1  3.960496      1
+#> 2  8.349806      1
+#> 3  6.237878      1
+#> 4  4.072384      1
+#> 5  2.302704      1
+#> 6  6.836110      1
 ```
 
 Bug Reports
@@ -109,6 +109,8 @@ If you find any bugs, please report them via email to [Sam Brilleman](mailto:sam
 References
 ----------
 
-1.  Bender R, Augustin T, and Blettner M. Generating survival times to simulate Cox proportional hazards models. *Statistics in Medicine* 2005; **24(11)**, 1713-1723.
+1.  Crowther MJ, and Lambert PC. Simulating biologically plausible complex survival data. *Statistics in Medicine* 2013; **32**, 4118–4134. <doi:10.1002/sim.5823>
 
-2.  Brent R. (1973) *Algorithms for Minimization without Derivatives*. Englewood Cliffs, NJ: Prentice-Hall.
+2.  Bender R, Augustin T, and Blettner M. Generating survival times to simulate Cox proportional hazards models. *Statistics in Medicine* 2005; **24(11)**, 1713-1723.
+
+3.  Brent R. (1973) *Algorithms for Minimization without Derivatives*. Englewood Cliffs, NJ: Prentice-Hall.

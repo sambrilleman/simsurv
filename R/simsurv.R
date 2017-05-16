@@ -3,9 +3,11 @@
 #' Simulate survival times from a user-specified hazard function.The hazard
 #' function is allowed to be time-dependent, and the resulting cumulative
 #' hazard function does not need to have a closed-form solution.
-#' The cumulative hazard is evaluated using Gauss-Kronrod quadrature and
-#' survival times are generated using a combination of the method in Bender
-#' et al. (2005) and Brent's (1973) univariate root finder (for the latter
+#' The package is based on the approach described in Crowther and Lambert (2013),
+#' whereby the cumulative hazard is evaluated using numerical quadrature and
+#' survival times are generated using an iterative algorithm which nests the
+#' quadrature-based evaluation of the cumulative hazard inside Brent's (1973)
+#' univariate root finder (for the latter
 #' the \code{\link[stats]{uniroot}} function is used). Not requiring a
 #' closed form solution to the cumulative hazard function has the benefit that
 #' survival times can be generated for complex models such as joint
@@ -43,9 +45,13 @@
 #' @author Sam Brilleman (\email{sam.brilleman@@monash.edu})
 #'
 #' @references
+#'   Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
+#'   complex survival data. \emph{Statistics in Medicine} \strong{32},
+#'   4118–-4134. \url{doi:10.1002/sim.5823}
+#'
 #'   Bender R, Augustin T, and Blettner M. (2005) Generating survival times to
 #'   simulate Cox proportional hazards models. \emph{Statistics in Medicine}
-#'   \strong{24}(11), 1713.
+#'   \strong{24}(11), 1713--1723.
 #'
 #'   Brent R. (1973) \emph{Algorithms for Minimization without Derivatives}.
 #'   Englewood Cliffs, NJ: Prentice-Hall.
