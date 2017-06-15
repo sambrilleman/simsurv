@@ -117,8 +117,9 @@
 #'   s1 <- simsurv(hazfn = weibull_ph_hazfn, x = covs, pars = betas, maxt = 10)
 #'   head(s1)
 #'
-simsurv <- function(hazfn, x = NULL, pars = NULL, maxt = NULL,
-                    qnodes = 15, interval = c(0, 500), seed = NULL, ...) {
+simsurv <- function(hazfn, x = NULL, pars = NULL, idvar = NULL, ids = NULL,
+                    maxt = NULL, qnodes = 15, interval = c(0, 500),
+                    seed = NULL, ...) {
   if (!is.null(seed))
     set.seed(seed)
   if (!is.function(hazfn))
@@ -128,12 +129,19 @@ simsurv <- function(hazfn, x = NULL, pars = NULL, maxt = NULL,
   if (!all(ok_args %in% nm_args))
     stop("'hazfn' function should have the following named arguments: ",
          paste(ok_args, collapse = ", "))
-  N <- nrow(x) # number of individuals
-  if (!nrow(pars) == N)
-    stop("'x' and 'pars' should have the same number of rows (i.e. individuals).")
-  tt <- sapply(seq(N), function(i) {
-    x_i <- if (!is.null(x)) x[i, , drop=FALSE] else NULL
-    pars_i <- if (!is.null(pars)) pars[i, , drop=FALSE] else NULL
+  x <- validate_df(x)
+  pars <- validate_df(pars)
+  if (!is.null(ids) == is.null(idvar))
+    stop("Both 'idvar' and 'ids' must be supplied together.")
+  if (!is.null(ids)) {
+    N <- length(ids) # number of individuals
+  } else {
+    N <- nrow(x) # number of individuals
+    ids <- seq(N)
+  }
+  tt <- sapply(ids, function(i) {
+    x_i <- subset_df(x, i, idvar = idvar)
+    pars_i <- subset_df(pars, i, idvar = idvar)
     u_i <- runif(1)
     # check whether S(t) is still greater than random uniform variable u_i at the
     # upper limit of uniroot's interval (otherwise uniroot will return an error)
@@ -180,6 +188,43 @@ rootfn <- function(t, hazfn, x = NULL, pars = NULL,
     qwts[[q]] * hazfn(t = qpts[[q]], x = x, pars = pars, ...)
   }))
   return(exp(-cumhaz) - u)
+}
+
+# Check that x is either NULL, a data frame, or a list of data frames
+#
+# @param x Object to check
+validate_df <- function(x) {
+  nm <- deparse(substitute(x))
+  if (!is.null(x) && !is.data.frame(x) && !is(x, "list"))
+    stop("'", nm, "' should be a data frame or a list of data frames.")
+  if (!is.null(x) && is(x, "list")) {
+    checks <- sapply(x, is.data.frame)
+    if (!all(checks))
+      stop("'", nm, "' should be a data frame or a list of data frames.")
+  }
+  x
+}
+
+# Extract rows of data corresponding to row i (if idvar is NULL) or
+# individual i (if idvar is not NULL)
+#
+# @param x A data frame or list of data frames
+# @param i The row index or the id value
+# @param idvar The name of the ID variable
+subset_df <- function(x, i, idvar = NULL) {
+  if (is.null(x)) {
+    return(x)
+  } else if (is.data.frame(x) && is.null(idvar)) {
+    return(x[i, , drop = FALSE])
+  } else if (is.data.frame(x)) {
+    return(x[x[[idvar]] == i, , drop = FALSE])
+  } else if (is(x, "list") && is.null(idvar)) {
+    return(lapply(x, function(tmp) tmp[i, , drop=FALSE]))
+  } else if (is(x, "list")) {
+    return(lapply(x, function(tmp) tmp[tmp[[idvar]] == i, , drop=FALSE]))
+  } else {
+    stop("'x' should be NULL, a data frame, or a list of data frames.")
+  }
 }
 
 # Convert a standardised quadrature node to an unstandardised value based on

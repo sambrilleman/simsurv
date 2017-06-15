@@ -4,8 +4,8 @@
 \alias{simsurv}
 \title{Simulate survival times from a user-specified hazard function}
 \usage{
-simsurv(hazfn, x = NULL, pars = NULL, maxt = NULL, qnodes = 15,
-  interval = c(0, 500), seed = NULL, ...)
+simsurv(hazfn, x = NULL, pars = NULL, idvar = NULL, ids = NULL,
+  maxt = NULL, qnodes = 15, interval = c(0, 500), seed = NULL, ...)
 }
 \arguments{
 \item{hazfn}{The user specified hazard function, with named arguments
