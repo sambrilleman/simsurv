@@ -19,11 +19,22 @@
 #' @param hazfn The user specified hazard function, with named arguments
 #'   \code{t}, \code{x} and \code{pars}. See the \strong{Details} section for
 #'   a description of these arguments.
-#' @param x A data frame of covariates to be supplied to \code{hazfn}. Each row
-#'   of the data frame should supply the covariate data for one individual.
-#' @param pars A data frame of parameter values to be supplied to \code{hazfn}.
-#'   Each row of the data frame should supply the parameter values for one
+#' @param x A data frame, or possibly a list of data frames, containing the
+#'   covariates to be supplied to \code{hazfn}. If \code{idvar = NULL} then
+#'   each row of the data frame should supply covariate data for one individual.
+#' @param pars A data frame, or possibly a list of data frames, containing the
+#'   parameter values to be supplied to \code{hazfn}. If \code{idvar = NULL}
+#'   then each row of the data frame should supply parameter values for one
 #'   individual.
+#' @param idvar The name of the ID variable identifying individuals. This is
+#'   only required when \code{x} and/or \code{pars} contain multiple rows per
+#'   individual. Otherwise, if \code{idvar = NULL} then each row of \code{x}
+#'   and \code{pars} is assumed to correspond to a different individual.
+#' @param ids A vector containing the unique values of \code{idvar} (i.e. the
+#'   unique individual IDs). This is only required when \code{x} and/or
+#'   \code{pars} contain multiple rows per individual. Otherwise, if
+#'   \code{ids = NULL} then each row of \code{x} and \code{pars} is assumed to
+#'   correspond to a different individual.
 #' @param maxt The maximum event time. For simulated event times greater than
 #'   \code{maxt}, the event time (\code{"eventtime"}) returned in the data frame
 #'   will be truncated at \code{maxt} and the event indicator (\code{"status"})
@@ -160,7 +171,12 @@ simsurv <- function(hazfn, x = NULL, pars = NULL, idvar = NULL, ids = NULL,
   } else {
     d <- rep(1, N)
   }
-  data.frame(id = seq(N), eventtime = tt, status = d, row.names = 1L)
+  ret <- data.frame(id = seq(N), eventtime = tt, status = d, row.names = NULL)
+  if (!is.null(idvar)) { # use idvar and ids if provided
+    ret[[1L]] <- names(tt)
+    colnames(ret)[[1L]] <- idvar
+  }
+  return(ret)
 }
 
 
@@ -217,14 +233,29 @@ subset_df <- function(x, i, idvar = NULL) {
   } else if (is.data.frame(x) && is.null(idvar)) {
     return(x[i, , drop = FALSE])
   } else if (is.data.frame(x)) {
+    check_for_idvar_and_id(x, idvar = idvar, id = i)
     return(x[x[[idvar]] == i, , drop = FALSE])
   } else if (is(x, "list") && is.null(idvar)) {
     return(lapply(x, function(tmp) tmp[i, , drop=FALSE]))
   } else if (is(x, "list")) {
-    return(lapply(x, function(tmp) tmp[tmp[[idvar]] == i, , drop=FALSE]))
+    return(lapply(x, function(tmp) {
+      check_for_idvar_and_id(tmp, idvar = idvar, id = i)
+      tmp[tmp[[idvar]] == i, , drop=FALSE]}))
   } else {
     stop("'x' should be NULL, a data frame, or a list of data frames.")
   }
+}
+
+# Check that the individual's ID appears in the data frame
+#
+# @param df A data frame (being either 'x' or 'pars' in the simsurv call)
+# @param idvar The name of the ID variable
+# @param id The current individual's ID value
+check_for_idvar_and_id <- function(df, idvar, id) {
+  if (!idvar %in% colnames(df))
+    stop("The variable '", idvar, "' does not appear in all data frames.", call. = FALSE)
+  if (!id %in% df[[idvar]])
+    stop("The individual '", id, "' does not appear in all data frames.", call. = FALSE)
 }
 
 # Convert a standardised quadrature node to an unstandardised value based on

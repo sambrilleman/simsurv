@@ -12,12 +12,25 @@ simsurv(hazfn, x = NULL, pars = NULL, idvar = NULL, ids = NULL,
 \code{t}, \code{x} and \code{pars}. See the \strong{Details} section for
 a description of these arguments.}
 
-\item{x}{A data frame of covariates to be supplied to \code{hazfn}. Each row
-of the data frame should supply the covariate data for one individual.}
+\item{x}{A data frame, or possibly a list of data frames, containing the
+covariates to be supplied to \code{hazfn}. If \code{idvar = NULL} then
+each row of the data frame should supply covariate data for one individual.}
 
-\item{pars}{A data frame of parameter values to be supplied to \code{hazfn}.
-Each row of the data frame should supply the parameter values for one
+\item{pars}{A data frame, or possibly a list of data frames, containing the
+parameter values to be supplied to \code{hazfn}. If \code{idvar = NULL}
+then each row of the data frame should supply parameter values for one
 individual.}
+
+\item{idvar}{The name of the ID variable identifying individuals. This is
+only required when \code{x} and/or \code{pars} contain multiple rows per
+individual. Otherwise, if \code{idvar = NULL} then each row of \code{x}
+and \code{pars} is assumed to correspond to a different individual.}
+
+\item{ids}{A vector containing the unique values of \code{idvar} (i.e. the
+unique individual IDs). This is only required when \code{x} and/or
+\code{pars} contain multiple rows per individual. Otherwise, if
+\code{ids = NULL} then each row of \code{x} and \code{pars} is assumed to
+correspond to a different individual.}
 
 \item{maxt}{The maximum event time. For simulated event times greater than
 \code{maxt}, the event time (\code{"eventtime"}) returned in the data frame
