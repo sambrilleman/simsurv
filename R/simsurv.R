@@ -146,6 +146,8 @@ simsurv <- function(hazfn, x = NULL, pars = NULL, idvar = NULL, ids = NULL,
     stop("Both 'idvar' and 'ids' must be supplied together.")
   if (!is.null(ids)) {
     N <- length(ids) # number of individuals
+    if (any(duplicated(ids)))
+      stop("The 'ids' vector must specify unique ID values.")
   } else {
     N <- nrow(x) # number of individuals
     ids <- seq(N)
@@ -171,11 +173,10 @@ simsurv <- function(hazfn, x = NULL, pars = NULL, idvar = NULL, ids = NULL,
   } else {
     d <- rep(1, N)
   }
-  ret <- data.frame(id = seq(N), eventtime = tt, status = d, row.names = NULL)
-  if (!is.null(idvar)) { # use idvar and ids if provided
-    ret[[1L]] <- names(tt)
+  ret <- data.frame(id = if (!is.null(ids)) ids else seq(N),
+                    eventtime = tt, status = d, row.names = NULL)
+  if (!is.null(idvar))
     colnames(ret)[[1L]] <- idvar
-  }
   return(ret)
 }
 
