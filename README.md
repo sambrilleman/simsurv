@@ -38,7 +38,7 @@ Examples
 
 ### Simpler examples
 
-Generate times from a Weibull model including a binary treatment variable, with log(hazard ratio) = -0.5, and censoring after 5 years:
+Generate times from a Weibull model including a binary treatment variable, with log hazard ratio of -0.5, and censoring after 5 years:
 
 ``` r
 covs <- data.frame(id = 1:1000, trt = stats::rbinom(1000, 1L, 0.5))
@@ -47,27 +47,27 @@ s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
 head(s1)
 #>   id eventtime status
 #> 1  1  5.000000      0
-#> 2  2  5.000000      0
-#> 3  3  2.364771      1
+#> 2  2  3.783668      1
+#> 3  3  1.873519      1
 #> 4  4  5.000000      0
-#> 5  5  3.086434      1
-#> 6  6  3.462024      1
+#> 5  5  5.000000      0
+#> 6  6  5.000000      0
 ```
 
-1.  Generate times from a Gompertz model:
+Generate times from a Gompertz model:
 
 ``` r
 s2 <- simsurv(dist = "gompertz", lambdas = 0.1, gammas = 0.05, x = covs)
 ```
 
-1.  Generate times from a 2-component mixture Weibull model:
+Generate times from a 2-component mixture Weibull model:
 
 ``` r
 s3 <- simsurv(lambdas = c(0.1, 0.05), gammas = c(1, 1.5),
               mixture = TRUE, pmix = 0.5, x = covs, maxt = 5)
 ```
 
-1.  Generate times from user-defined log hazard function:
+Generate times from user-defined log hazard function:
 
 ``` r
 fn <- function(t, x, betas, ...)
@@ -159,3 +159,5 @@ References
 2.  Bender R, Augustin T, and Blettner M. Generating survival times to simulate Cox proportional hazards models. *Statistics in Medicine* 2005; **24(11)**, 1713-1723.
 
 3.  Brent R. (1973) *Algorithms for Minimization without Derivatives*. Englewood Cliffs, NJ: Prentice-Hall.
+
+4.  Crowther MJ, and Lambert PC. Simulating complex survival data. *The Stata Journal* 2012; **12**(4), 674–687. <http://www.stata-journal.com/sjpdf.html?articlenum=st0275>
