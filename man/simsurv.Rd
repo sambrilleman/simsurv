@@ -7,7 +7,7 @@
 simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas, x,
   betas, mixture = FALSE, pmix = 0.5, hazard, loghazard, idvar = NULL,
   ids = NULL, nodes = 15, maxt = NULL, interval = c(1e-08, 500),
-  seed = NULL, ...)
+  seed = sample.int(.Machine$integer.max, 1), ...)
 }
 \arguments{
 \item{dist}{Character string specifying the parametric survival distribution.
@@ -93,7 +93,7 @@ will be set to zero indicating that the individual was right-censored.}
 \item{interval}{The interval over which to search for the
 \code{\link[stats]{uniroot}} corresponding to each simulated event time.}
 
-\item{seed}{An optional \code{\link[=set.seed]{seed}} to use.}
+\item{seed}{The \code{\link[=set.seed]{seed}} to use.}
 
 \item{...}{Other arguments passed to \code{hazard} or \code{loghazard}.}
 }
