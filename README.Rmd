@@ -18,15 +18,46 @@ knitr::opts_chunk$set(
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/simsurv)](http://www.r-pkg.org/pkg/simsurv) 
 [![License](https://img.shields.io/badge/License-GPL%20%28%3E=%203%29-brightgreen.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
 
-**simsurv** is an R package that allows the user to simulate survival times from any user-specified hazard function. The hazard function is allowed to be time-dependent, and the resulting cumulative hazard function does not need to have a closed-form solution. The package is based on the approach described in Crowther and Lambert (2013), whereby the cumulative hazard is evaluated using numerical quadrature and survival times are generated using an iterative algorithm which nests the quadrature-based evaluation of the cumulative hazard inside Brent's (1973) univariate root finder. Not requiring a closed form solution to the cumulative hazard function has the benefit that survival times can be generated for complex models such as joint longitudinal and survival models; the package documentation provides an example of this. 
+**simsurv** is an R package that allows the user to simulate survival times from
+standard parametric survival distributions (exponential, Weibull, and Gompertz),
+2-component mixture distributions, or a user-defined [log] hazard function.
+Baseline covariates can be included under a proportional hazards assumption.
+Under the 2-component mixture distributions the baseline survival at time 
+*t* is taken to be *S(t) = p x S_1(t) + (1 - p) x S_2(t)*
+where *S_1(t)* and *S_2(t)* are the baseline survival under each component of 
+the mixture distribution and *p* is the mixing parameter. Each component of the 
+mixture distribution is assumed to be either exponential, Weibull or Gompertz.
+The 2-component mixture distributions can allow for a variety of flexible
+baseline hazard functions (see Crowther and Lambert (2013) for some examples).
 
-**Note:** Please note that the version available on GitHub is the most up-to-date *development* version of the package. A stable version of the package will be available from CRAN once it is released.
+If the user wishes to provide a user-defined [log] hazard function (instead
+of using one of the standard parametric survival distributions) then this is
+also possible. If a user-defined [log] hazard function is specified, then this 
+is allowed to be time-dependent, and the resulting cumulative hazard function
+does not need to have a closed-form solution. The survival times are
+generated using the approach described in Crowther and Lambert (2013),
+whereby the cumulative hazard is evaluated using numerical quadrature and
+survival times are generated using an iterative algorithm which nests the
+quadrature-based evaluation of the cumulative hazard inside Brent's (1973)
+univariate root finder. Not requiring a closed form solution to the cumulative
+hazard function has the benefit that survival times can be generated for
+complex models such as joint longitudinal and survival models; the
+package documentation provides an example of this.
+
+Note that this package is modelled on the user-written **survsim** package
+available in the Stata software (see Crowther and Lambert (2012)).
+
+**Note:** Please note that the version available on GitHub is the most up-to-date 
+*development* version of the package. A stable version of the package will be 
+available from CRAN once it is released.
 
 ## Getting Started
 
 ### Installation
 
-You can install **simsurv** directly from GitHub using the **devtools** package. To do this you should first check you have devtools installed by executing the following commands from within your R session:
+You can install **simsurv** directly from GitHub using the **devtools** package. 
+To do this you should first check you have devtools installed by executing the 
+following commands from within your R session:
 
 ```r
 if (!require(devtools)) {
@@ -41,23 +72,57 @@ library(devtools)
 install_github("sambrilleman/simsurv")
 ```
 
-## Example
+## Examples
+
+### Simpler examples
+
+Generate times from a Weibull model including a binary treatment variable, with log(hazard ratio) = -0.5, and censoring after 5 years:
+
+```{r example1}  
+covs <- data.frame(id = 1:1000, trt = stats::rbinom(1000, 1L, 0.5))
+s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
+              x = covs, betas = c(trt = -0.5), maxt = 5)
+head(s1)
+```
+
+2. Generate times from a Gompertz model:
+
+```{r example2}
+s2 <- simsurv(dist = "gompertz", lambdas = 0.1, gammas = 0.05, x = covs)
+```
+
+3. Generate times from a 2-component mixture Weibull model:
+
+```{r example3}
+s3 <- simsurv(lambdas = c(0.1, 0.05), gammas = c(1, 1.5),
+              mixture = TRUE, pmix = 0.5, x = covs, maxt = 5)
+```
+
+4. Generate times from user-defined log hazard function:
+
+```{r example4}
+fn <- function(t, x, betas, ...)
+  (-1 + 0.02 * t - 0.03 * t ^ 2 + 0.005 * t ^ 3)
+s4 <- simsurv(loghazard = fn, x = covs, maxt = 1.5)
+```
+
+### Complex examples
 
 In this section we present an example showing how the **simsurv** package's main function can be used to simulate survival times based on a joint longitudinal and survival model. (In most instances, simulating survival times from a joint longitudinal and survival model can pose difficulties since time-dependency in the hazard function leads to there not being a general closed form solution to the integral when evaluating the cumulative hazard). 
 
-First we define the hazard function to pass to `simsurv`. This function must be defined by the user and must use three named arguments: `t`, which is the time variable; `x`, which is a data frame with each row containing the covariate values for one individual; `pars`, which is a data frame with each row containing the "true" parameter values for one individual. The function must return the hazard evaluated at time `t`. We will define the hazard function for a Weibull proportional hazards regression submodel from a joint longitudinal and survival model with a so-called "current value" association structure, where the hazard at time *t* depends on the expected value of the longitudinal outcome also evaluated at time *t*.
+First we define the hazard function to pass to `simsurv`. This function must be defined by the user and must use three named arguments: `t`, which is the time variable; `x`, which is a data frame with each row containing the covariate values for one individual; `betas`, which is a data frame with each row containing the "true" parameter values for one individual. The function must return the hazard evaluated at time `t`. We will define the hazard function for a Weibull proportional hazards regression submodel from a joint longitudinal and survival model with a so-called "current value" association structure, where the hazard at time *t* depends on the expected value of the longitudinal outcome also evaluated at time *t*.
 
 ```{r hazfn, eval=T}
-weibull_ph_hazfn <- function(t, x, pars) {
-  pars[["shape"]] * (t ^ (pars[["shape"]] - 1)) * exp(
-    pars[["betaEvent_intercept"]] +
-    pars[["betaEvent_binary"]] * x[["Z1"]] +
-    pars[["betaEvent_continuous"]] * x[["Z2"]] +
-    pars[["betaEvent_assoc"]] * (
-      pars[["betaLong_intercept"]] +
-      pars[["betaLong_slope"]] * t +
-      pars[["betaLong_binary"]] * x[["Z1"]] +
-      pars[["betaLong_continuous"]] * x[["Z2"]]
+haz <- function(t, x, betas, ...) {
+  betas[["shape"]] * (t ^ (betas[["shape"]] - 1)) * exp(
+    betas[["betaEvent_intercept"]] +
+    betas[["betaEvent_binary"]] * x[["Z1"]] +
+    betas[["betaEvent_continuous"]] * x[["Z2"]] +
+    betas[["betaEvent_assoc"]] * (
+      betas[["betaLong_intercept"]] +
+      betas[["betaLong_slope"]] * t +
+      betas[["betaLong_binary"]] * x[["Z1"]] +
+      betas[["betaLong_continuous"]] * x[["Z2"]]
     )
   )
 }
@@ -98,10 +163,10 @@ covs <- data.frame(
 )
 ```
 
-Then we simulate the survival times based on the hazard function (passed to the `hazfn` argument), the covariate values for each individual (passed to the `x` argument), and true parameter values for each individual (passed to the `pars` argument). We will also censor individuals with survival times greater than 10 years (or whatever time units we have assumed to be using) by specifying the `maxt` argument:
+Then we simulate the survival times based on the hazard function (passed to the `hazfn` argument), the covariate values for each individual (passed to the `x` argument), and true parameter values for each individual (passed to the `betas` argument). We will also censor individuals with survival times greater than 10 years (or whatever time units we have assumed to be using) by specifying the `maxt` argument:
 
 ```{r simsurv, eval=T}
-s1 <- simsurv(hazfn = weibull_ph_hazfn, x = covs, pars = betas, maxt = 10)
+s1 <- simsurv(hazard = haz, x = covs, betas = betas, maxt = 10)
 head(s1)
 ```
 
