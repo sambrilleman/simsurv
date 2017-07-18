@@ -2,51 +2,103 @@
 % Please edit documentation in R/simsurv.R
 \name{simsurv}
 \alias{simsurv}
-\title{Simulate survival times from a user-specified hazard function}
+\title{Simulate complex survival data}
 \usage{
-simsurv(hazfn, x = NULL, pars = NULL, idvar = NULL, ids = NULL,
-  maxt = NULL, qnodes = 15, interval = c(0, 500), seed = NULL, ...)
+simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas, x,
+  betas, mixture = FALSE, pmix = 0.5, hazard, loghazard, idvar = NULL,
+  ids = NULL, nodes = 15, maxt = NULL, interval = c(1e-08, 500),
+  seed = sample.int(.Machine$integer.max, 1), ...)
 }
 \arguments{
-\item{hazfn}{The user specified hazard function, with named arguments
-\code{t}, \code{x} and \code{pars}. See the \strong{Details} section for
-a description of these arguments.}
+\item{dist}{Character string specifying the parametric survival distribution.
+Can be \code{"weibull"} (the default), \code{"exponential"}, or
+\code{"gompertz"}. Note that this is ignored if a user-defined baseline
+hazard function is provided via the \code{hazard} or \code{loghazard}
+argument.}
 
-\item{x}{A data frame, or possibly a list of data frames, containing the
-covariates to be supplied to \code{hazfn}. If \code{idvar = NULL} then
-each row of the data frame should supply covariate data for one individual.}
+\item{lambdas}{A numeric vector corresponding to the scale parameters for
+the exponential, Weibull or Gompertz distributions. This vector should be
+length one for any of the standard parametric distributions, or length two
+for a 2-component mixture distribution when \code{mixture = TRUE}.}
 
-\item{pars}{A data frame, or possibly a list of data frames, containing the
-parameter values to be supplied to \code{hazfn}. If \code{idvar = NULL}
-then each row of the data frame should supply parameter values for one
-individual.}
+\item{gammas}{A numeric vector corresponding to the shape parameters for
+the Weibull or Gompertz distributions. This vector should be length
+one for the standard Weibull or Gompertz distributions, or length two
+for a 2-component mixture distribution when \code{mixture = TRUE}.}
+
+\item{x}{A data frame containing the covariate values for each individual.
+Each row of the data frame should supply covariate data for one individual.
+The column names should correspond to the named elements in \code{betas}.
+If no covariates are being used to simulate the event times, then this data
+frame should just include an ID value for each individual; this is necessary
+since the number of individuals to simulate event times for is taken to be the
+number of rows in \code{x} (unless \code{idvar} and \code{ids} are
+specified, in which case the number of individuals to simulate event times
+for is taken to be \code{length(ids)}).}
+
+\item{betas}{A named vector, a data frame, or a list of data frames,
+containing the "true" parameters (e.g. log hazard ratios).
+If a standard exponential, Weibull, or Gompertz distribution, or a 2-component
+mixture distribution is being used then \code{betas} should provide the log hazard
+ratios for each of the baseline covariates that is to be included in the linear
+predictor of the proportional hazards model. This is most easily specified
+as a named vector (see the \strong{Examples}). Alternatively, if a
+user-defined baseline hazard function is provided via
+the \code{hazard} or \code{loghazard} argument, then \code{betas} can be
+specified as a vector, a data frame, or a list of data frames, and the
+user-defined [log] hazard function should extract named elements of
+\code{betas} however necessary in order to calculate the [log] hazard for
+each individual. See the \strong{Examples}.}
+
+\item{mixture}{Logical specifying whether to use a 2-component mixture
+model for the survival distribution. If \code{TRUE}, then the distribution
+of the mixture components is determined by the \code{dist} argument.}
+
+\item{pmix}{Scalar between 0 and 1 defining the mixing parameter when
+\code{mixture = TRUE}. The baseline survival at time t is taken to be
+\eqn{S(t) = p * S_1(t) + (1 - p) * S_2(t)}
+where \eqn{S_1(t)} and \eqn{S_2(t)} are the baseline survival under each
+component of the mixture distribution.}
+
+\item{hazard}{Optionally, a user-defined hazard function, with arguments
+\code{t}, \code{x}, \code{betas} and \code{...}. This function should return the
+hazard at time \code{t} for an individual with covariates supplied via \code{x}
+and parameters supplied via \code{betas}. See the \strong{Examples}.}
+
+\item{loghazard}{Optionally, a user-defined log hazard function, with arguments
+\code{t}, \code{x} \code{betas} and \code{...}. This function should return the
+log hazard at time \code{t} for an individual with covariates supplied via
+\code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.}
 
 \item{idvar}{The name of the ID variable identifying individuals. This is
-only required when \code{x} and/or \code{pars} contain multiple rows per
-individual. Otherwise, if \code{idvar = NULL} then each row of \code{x}
-and \code{pars} is assumed to correspond to a different individual.}
+only required when \code{x} (and \code{betas} if it is supplied as a
+data frame) contains multiple rows per individual. Otherwise, if
+\code{idvar = NULL} then each row of \code{x} (and \code{betas} if it is
+supplied as a data frame) is assumed to correspond to a different individual.}
 
 \item{ids}{A vector containing the unique values of \code{idvar} (i.e. the
-unique individual IDs). This is only required when \code{x} and/or
-\code{pars} contain multiple rows per individual. Otherwise, if
-\code{ids = NULL} then each row of \code{x} and \code{pars} is assumed to
-correspond to a different individual.}
+unique individual IDs). This is only required when \code{x} (and \code{betas}
+if it is supplied as a data frame) contain multiple rows per individual. Otherwise,
+if \code{idvar = NULL} then each row of \code{x} (and \code{betas} if it is
+supplied as a data frame) is assumed to correspond to a different individual.}
+
+\item{nodes}{Integer specifying the number of quadrature nodes to use for
+the Gauss-Kronrod quadrature. Can be 7, 11, or 15.}
 
 \item{maxt}{The maximum event time. For simulated event times greater than
 \code{maxt}, the event time (\code{"eventtime"}) returned in the data frame
 will be truncated at \code{maxt} and the event indicator (\code{"status"})
 will be set to zero indicating that the individual was right-censored.}
 
-\item{qnodes}{Integer specifying the number of quadrature nodes to use for
-the Gauss-Kronrod quadrature.}
-
 \item{interval}{The interval over which to search for the
 \code{\link[stats]{uniroot}} corresponding to each simulated event time.}
 
-\item{...}{Other arguments passed to \code{hazfn}.}
+\item{seed}{The \code{\link[=set.seed]{seed}} to use.}
+
+\item{...}{Other arguments passed to \code{hazard} or \code{loghazard}.}
 }
 \value{
-A data frame a row for each individual, and the following three
+A data frame with a row for each individual, and the following three
   columns:
   \itemize{
     \item \code{id}  The individual identifier
@@ -55,22 +107,70 @@ A data frame a row for each individual, and the following three
   }
 }
 \description{
-Simulate survival times from a user-specified hazard function.The hazard
-function is allowed to be time-dependent, and the resulting cumulative
-hazard function does not need to have a closed-form solution.
-The package is based on the approach described in Crowther and Lambert (2013),
+Simulate survival times from standard parametric survival distributions,
+2-component mixture distributions, or a user-defined [log] hazard
+function.
+}
+\details{
+The \code{simsurv} function simulates survival times from
+standard parametric survival distributions (exponential, Weibull, Gompertz),
+2-component mixture distributions, or a user-defined [log] hazard function.
+Baseline covariates can be included under a proportional hazards assumption.
+Under the 2-component mixture distributions (obtained by setting
+\code{mixture = TRUE}) the baseline survival at time \eqn{t} is taken to be
+\eqn{S(t) = p * S_1(t) + (1 - p) * S_2(t)}
+where \eqn{S_1(t)} and \eqn{S_2(t)} are the baseline survival under each
+component of the mixture distribution and \eqn{p} is the mixing parameter
+specified via the argument \code{pmix}. Each component of the mixture
+distribution is assumed to be either exponential, Weibull or Gompertz.
+The 2-component mixture distributions can allow for a variety of flexible
+baseline hazard functions (see Crowther and Lambert (2013) for some examples).
+
+If the user wishes to provide a user-defined [log] hazard function (instead
+of using one of the standard parametric survival distributions) then this is
+also possible via the \code{hazard} or \code{loghazard} argument.
+If a user-defined [log] hazard function is specified, then this is allowed
+to be time-dependent, and the resulting cumulative hazard function
+does not need to have a closed-form solution. The survival times are
+generated using the approach described in Crowther and Lambert (2013),
 whereby the cumulative hazard is evaluated using numerical quadrature and
 survival times are generated using an iterative algorithm which nests the
 quadrature-based evaluation of the cumulative hazard inside Brent's (1973)
-univariate root finder (for the latter
-the \code{\link[stats]{uniroot}} function is used). Not requiring a
-closed form solution to the cumulative hazard function has the benefit that
-survival times can be generated for complex models such as joint
-longitudinal and survival models; the \strong{Examples} section provides
-an example of this.
+univariate root finder (for the latter the \code{\link[stats]{uniroot}}
+function is used). Not requiring a closed form solution to the cumulative
+hazard function has the benefit that survival times can be generated for
+complex models such as joint longitudinal and survival models; the
+\strong{Examples} section provides an example of this.
+}
+\note{
+This package is modelled on the user-written \code{survsim} package
+  available in the Stata software (see Crowther and Lambert (2012)).
 }
 \examples{
-  #######
+  #-------------- Simpler examples
+
+  # Generate times from a Weibull model including a binary
+  # treatment variable, with log(hazard ratio) = -0.5, and censoring
+  # after 5 years:
+  covs <- data.frame(id = 1:1000, trt = stats::rbinom(1000, 1L, 0.5))
+  s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
+                x = covs, betas = c(trt = -0.5), maxt = 5)
+  head(s1)
+
+  # Generate times from a Gompertz model:
+  s2 <- simsurv(dist = "gompertz", lambdas = 0.1, gammas = 0.05, x = covs)
+
+  # Generate times from a 2-component mixture Weibull model:
+  s3 <- simsurv(lambdas = c(0.1, 0.05), gammas = c(1, 1.5),
+                mixture = TRUE, pmix = 0.5, x = covs, maxt = 5)
+
+  # Generate times from user-defined log hazard function:
+  fn <- function(t, x, betas, ...)
+    (-1 + 0.02 * t - 0.03 * t ^ 2 + 0.005 * t ^ 3)
+  s4 <- simsurv(loghazard = fn, x = covs, maxt = 1.5)
+
+  #-------------- Complex examples
+
   # Here we present an example of simulating survival times
   # based on a joint longitudinal and survival model
 
@@ -78,16 +178,16 @@ an example of this.
   # (NB this is a Weibull proportional hazards regression submodel
   # from a joint longitudinal and survival model with a "current
   # value" association structure).
-  weibull_ph_hazfn <- function(t, x, pars) {
-      pars[["shape"]] * (t ^ (pars[["shape"]] - 1)) * exp(
-        pars[["betaEvent_intercept"]] +
-        pars[["betaEvent_binary"]] * x[["Z1"]] +
-        pars[["betaEvent_continuous"]] * x[["Z2"]] +
-        pars[["betaEvent_assoc"]] * (
-          pars[["betaLong_intercept"]] +
-          pars[["betaLong_slope"]] * t +
-          pars[["betaLong_binary"]] * x[["Z1"]] +
-          pars[["betaLong_continuous"]] * x[["Z2"]]
+  haz <- function(t, x, betas, ...) {
+      betas[["shape"]] * (t ^ (betas[["shape"]] - 1)) * exp(
+        betas[["betaEvent_intercept"]] +
+        betas[["betaEvent_binary"]] * x[["Z1"]] +
+        betas[["betaEvent_continuous"]] * x[["Z2"]] +
+        betas[["betaEvent_assoc"]] * (
+          betas[["betaLong_intercept"]] +
+          betas[["betaLong_slope"]] * t +
+          betas[["betaLong_binary"]] * x[["Z1"]] +
+          betas[["betaLong_continuous"]] * x[["Z2"]]
         )
       )
   }
@@ -120,21 +220,21 @@ an example of this.
   betas$betaLong_slope     <- betas$betaLong_slope     + b[,2]
 
   # Covariate data
-  covs <- data.frame(
-    Z1 = rbinom(N, 1, 0.45), # a binary covariate
-    Z2 = rnorm(N, 44, 8.5)   # a continuous covariate
+  covdat <- data.frame(
+    Z1 = stats::rbinom(N, 1, 0.45), # a binary covariate
+    Z2 = stats::rnorm(N, 44, 8.5)   # a continuous covariate
   )
 
   # Then we simulate the survival times based on the
   # hazard function, covariates, and true parameter values
-  s1 <- simsurv(hazfn = weibull_ph_hazfn, x = covs, pars = betas, maxt = 10)
-  head(s1)
+  times <- simsurv(hazard = haz, x = covdat, betas = betas, maxt = 10)
+  head(times)
 
 }
 \references{
 Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
   complex survival data. \emph{Statistics in Medicine} \strong{32},
-  4118–-4134. \url{doi:10.1002/sim.5823}
+  4118--4134. \url{doi:10.1002/sim.5823}
 
   Bender R, Augustin T, and Blettner M. (2005) Generating survival times to
   simulate Cox proportional hazards models. \emph{Statistics in Medicine}
@@ -142,6 +242,10 @@ Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
 
   Brent R. (1973) \emph{Algorithms for Minimization without Derivatives}.
   Englewood Cliffs, NJ: Prentice-Hall.
+
+  Crowther MJ, and Lambert PC. (2012) Simulating complex survival data.
+  \emph{The Stata Journal} \strong{12}(4), 674--687.
+  \url{http://www.stata-journal.com/sjpdf.html?articlenum=st0275}
 }
 \author{
 Sam Brilleman (\email{sam.brilleman@monash.edu})
