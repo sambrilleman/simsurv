@@ -76,7 +76,7 @@
 #'   the Gauss-Kronrod quadrature. Can be 7, 11, or 15.
 #' @param interval The interval over which to search for the
 #'   \code{\link[stats]{uniroot}} corresponding to each simulated event time.
-#' @param seed An optional \code{\link[=set.seed]{seed}} to use.
+#' @param seed The \code{\link[=set.seed]{seed}} to use.
 #' @param ... Other arguments passed to \code{hazard} or \code{loghazard}.
 #'
 #' @details The \code{simsurv} function simulates survival times from
@@ -227,10 +227,9 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
                     pmix = 0.5, hazard, loghazard,
                     idvar = NULL, ids = NULL, nodes = 15,
                     maxt = NULL, interval = c(1E-8, 500),
-                    seed = NULL, ...) {
+                    seed = sample.int(.Machine$integer.max, 1), ...) {
+  set.seed(seed)
   dist <- match.arg(dist)
-  if (!is.null(seed))
-    set.seed(seed)
   if (missing(lambdas))
     lambdas <- NULL
   if (missing(gammas))
@@ -323,6 +322,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
                     eventtime = tt, status = d, row.names = NULL)
   if (!is.null(idvar))
     colnames(ret)[[1L]] <- idvar
+  ret <- structure(ret, seed = seed)
   return(ret)
 }
 
