@@ -22,6 +22,9 @@ Depends:
 Imports:
     stats
 Suggests:
-    MASS
+    eha (>= 2.4.5),
+    MASS,
+    survival (>= 2.40.1),
+    testthat (>= 1.0.2)
 LazyData: true
 RoxygenNote: 6.0.1
