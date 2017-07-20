@@ -61,12 +61,12 @@ where \eqn{S_1(t)} and \eqn{S_2(t)} are the baseline survival under each
 component of the mixture distribution.}
 
 \item{hazard}{Optionally, a user-defined hazard function, with arguments
-\code{t}, \code{x}, \code{betas} and \code{...}. This function should return the
+\code{t}, \code{x}, and \code{betas}. This function should return the
 hazard at time \code{t} for an individual with covariates supplied via \code{x}
 and parameters supplied via \code{betas}. See the \strong{Examples}.}
 
 \item{loghazard}{Optionally, a user-defined log hazard function, with arguments
-\code{t}, \code{x} \code{betas} and \code{...}. This function should return the
+\code{t}, \code{x}, and \code{betas}. This function should return the
 log hazard at time \code{t} for an individual with covariates supplied via
 \code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.}
 
@@ -141,6 +141,24 @@ function is used). Not requiring a closed form solution to the cumulative
 hazard function has the benefit that survival times can be generated for
 complex models such as joint longitudinal and survival models; the
 \strong{Examples} section provides an example of this.
+
+\subsection{Parameterisations for the Weibull distribution}{
+For the exponential and Weibull distributions, with scale parameter
+\eqn{lambda} and shape parameter \eqn{gamma} (with \eqn{gamma} fixed equal
+to 1 for the exponential distribution) the baseline hazard and survival
+functions used by \code{simsurv} are:
+\eqn{h(t) = gamma * lambda * t ^ {gamma - 1}} and
+\eqn{S(t) = exp(-lambda * t ^ {gamma})}.
+
+Note that this parameterisation differs from the one used by
+\code{\link[stats]{dweibull}} or the \code{\link[eha]{phreg}} modelling
+function in the \pkg{eha} package. The parameterisation used in those
+functions can be achieved by transforming the scale parameter via the
+relationship \eqn{b = lambda ^ {-1 / gamma}}, or equivalently
+\eqn{lambda = b ^ {-gamma}} where \eqn{b} is the scale parameter under
+the parameterisation of the Weibull distribution used by
+\code{\link[stats]{dweibull}} or \code{\link[eha]{phreg}}.
+}
 }
 \note{
 This package is modelled on the user-written \code{survsim} package
@@ -152,7 +170,7 @@ This package is modelled on the user-written \code{survsim} package
   # Generate times from a Weibull model including a binary
   # treatment variable, with log(hazard ratio) = -0.5, and censoring
   # after 5 years:
-  covs <- data.frame(id = 1:1000, trt = stats::rbinom(1000, 1L, 0.5))
+  covs <- data.frame(id = 1:100, trt = stats::rbinom(200, 1L, 0.5))
   s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
                 x = covs, betas = c(trt = -0.5), maxt = 5)
   head(s1)
