@@ -2,7 +2,7 @@
 % Please edit documentation in R/simsurv.R
 \name{simsurv}
 \alias{simsurv}
-\title{Simulate complex survival data}
+\title{Simulate survival data}
 \usage{
 simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas, x,
   betas, mixture = FALSE, pmix = 0.5, hazard, loghazard, idvar = NULL,

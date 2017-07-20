@@ -1,4 +1,4 @@
-#' Simulate complex survival data
+#' Simulate survival data
 #'
 #' Simulate survival times from standard parametric survival distributions,
 #' 2-component mixture distributions, or a user-defined [log] hazard

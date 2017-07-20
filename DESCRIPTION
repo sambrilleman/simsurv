@@ -1,6 +1,6 @@
 Package: simsurv
 Type: Package
-Title: Simulate Complex Survival Data
+Title: Simulate Survival Data
 Version: 0.0.1
 Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu", 
              role = c("cre", "aut", "cph")))
