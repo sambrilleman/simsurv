@@ -200,7 +200,7 @@
 #'
 #'   # Generate times from a Weibull model with diminishing treatment effect:
 #'   s5 <- simsurv(lambdas = 0.1, gammas = 1.5, betas = c(trt = -0.5),
-#'                 x = covs, tde(trt 0.05), tdefunction = "log")
+#'                 x = covs, tde = c(trt = 0.05), tdefunction = "log")
 #'
 #'   #-------------- Complex examples
 #'
