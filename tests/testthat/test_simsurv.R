@@ -45,6 +45,7 @@ npat <- 500
 tdefunction <- NULL
 
 test_that("exponential model returns unbiased estimates", {
+  test_that::skip_on_cran()
   true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
@@ -54,6 +55,7 @@ test_that("exponential model returns unbiased estimates", {
 })
 
 test_that("weibull model returns unbiased estimates", {
+  test_that::skip_on_cran()
   true <- list(lambdas = 0.1, gammas = 1.5, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
@@ -62,6 +64,7 @@ test_that("weibull model returns unbiased estimates", {
 })
 
 test_that("gompertz model returns unbiased estimates", {
+  test_that::skip_on_cran()
   true <- list(lambdas = 0.1, gammas = .7, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
@@ -76,6 +79,7 @@ npat <- 500
 tdefunction <- "log"
 
 test_that("exponential model returns unbiased estimates", {
+  test_that::skip_on_cran()
   true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
@@ -84,6 +88,7 @@ test_that("exponential model returns unbiased estimates", {
 })
 
 test_that("weibull model returns unbiased estimates", {
+  test_that::skip_on_cran()
   true <- list(lambdas = 0.1, gammas = 1.5, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
@@ -92,6 +97,7 @@ test_that("weibull model returns unbiased estimates", {
 })
 
 test_that("gompertz model returns unbiased estimates", {
+  test_that::skip_on_cran()
   true <- list(lambdas = 0.1, gammas = .7, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
