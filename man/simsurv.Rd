@@ -5,9 +5,9 @@
 \title{Simulate survival data}
 \usage{
 simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas, x,
-  betas, mixture = FALSE, pmix = 0.5, hazard, loghazard, idvar = NULL,
-  ids = NULL, nodes = 15, maxt = NULL, interval = c(1e-08, 500),
-  seed = sample.int(.Machine$integer.max, 1), ...)
+  betas, tde, tdefunction = NULL, mixture = FALSE, pmix = 0.5, hazard,
+  loghazard, idvar = NULL, ids = NULL, nodes = 15, maxt = NULL,
+  interval = c(1e-08, 500), seed = sample.int(.Machine$integer.max, 1), ...)
 }
 \arguments{
 \item{dist}{Character string specifying the parametric survival distribution.
@@ -49,6 +49,21 @@ specified as a vector, a data frame, or a list of data frames, and the
 user-defined [log] hazard function should extract named elements of
 \code{betas} however necessary in order to calculate the [log] hazard for
 each individual. See the \strong{Examples}.}
+
+\item{tde}{A named vector, containing the "true" parameters that will be used
+to create time dependent effects (i.e. non-proportional hazards). The
+values specified in \code{tde} are used as coefficients (in the linear
+predictor of the proportional hazards model) on an interaction term between
+the correponding covariate and time (or some function of time, for example
+log time, if \code{tdefunction} is not \code{NULL}).}
+
+\item{tdefunction}{An optional function of time to which covariates specified
+in \code{tde} will be interacted, in order to generate time dependent
+effects (i.e. non-proportional hazards). If \code{NULL} then the covariates
+specified in \code{tde} will be interacted with linear time. This can be the
+character string corresponding to a standard function (such as "log") or it
+can be a user-defined function with a single argument (for example
+\code{function(x) x ^ 2}).}
 
 \item{mixture}{Logical specifying whether to use a 2-component mixture
 model for the survival distribution. If \code{TRUE}, then the distribution
@@ -116,6 +131,12 @@ The \code{simsurv} function simulates survival times from
 standard parametric survival distributions (exponential, Weibull, Gompertz),
 2-component mixture distributions, or a user-defined [log] hazard function.
 Baseline covariates can be included under a proportional hazards assumption.
+Time dependent effects (i.e. non-proportional hazards) can be included by
+interacting covariates with time (by specifying them in the \code{tde}
+argument); the default behaviour is to interact the covariates with linear
+time, however, they can be interacted with some other function of time simply
+by using the \code{tdefunction} argument.
+
 Under the 2-component mixture distributions (obtained by setting
 \code{mixture = TRUE}) the baseline survival at time \eqn{t} is taken to be
 \eqn{S(t) = p * S_1(t) + (1 - p) * S_2(t)}
@@ -171,8 +192,8 @@ This package is modelled on the user-written \code{survsim} package
   # treatment variable, with log(hazard ratio) = -0.5, and censoring
   # after 5 years:
   covs <- data.frame(id = 1:100, trt = stats::rbinom(200, 1L, 0.5))
-  s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
-                x = covs, betas = c(trt = -0.5), maxt = 5)
+  s1 <- simsurv(lambdas = 0.1, gammas = 1.5, betas = c(trt = -0.5)
+                x = covs, , maxt = 5)
   head(s1)
 
   # Generate times from a Gompertz model:
@@ -186,6 +207,10 @@ This package is modelled on the user-written \code{survsim} package
   fn <- function(t, x, betas, ...)
     (-1 + 0.02 * t - 0.03 * t ^ 2 + 0.005 * t ^ 3)
   s4 <- simsurv(loghazard = fn, x = covs, maxt = 1.5)
+
+  # Generate times from a Weibull model with diminishing treatment effect:
+  s5 <- simsurv(lambdas = 0.1, gammas = 1.5, betas = c(trt = -0.5),
+                x = covs, tde(trt 0.05), tdefunction = "log")
 
   #-------------- Complex examples
 

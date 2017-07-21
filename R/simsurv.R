@@ -42,6 +42,19 @@
 #'   user-defined [log] hazard function should extract named elements of
 #'   \code{betas} however necessary in order to calculate the [log] hazard for
 #'   each individual. See the \strong{Examples}.
+#' @param tde A named vector, containing the "true" parameters that will be used
+#'   to create time dependent effects (i.e. non-proportional hazards). The
+#'   values specified in \code{tde} are used as coefficients (in the linear
+#'   predictor of the proportional hazards model) on an interaction term between
+#'   the correponding covariate and time (or some function of time, for example
+#'   log time, if \code{tdefunction} is not \code{NULL}).
+#' @param tdefunction An optional function of time to which covariates specified
+#'   in \code{tde} will be interacted, in order to generate time dependent
+#'   effects (i.e. non-proportional hazards). If \code{NULL} then the covariates
+#'   specified in \code{tde} will be interacted with linear time. This can be the
+#'   character string corresponding to a standard function (such as "log") or it
+#'   can be a user-defined function with a single argument (for example
+#'   \code{function(x) x ^ 2}).
 #' @param mixture Logical specifying whether to use a 2-component mixture
 #'   model for the survival distribution. If \code{TRUE}, then the distribution
 #'   of the mixture components is determined by the \code{dist} argument.
@@ -83,6 +96,12 @@
 #' standard parametric survival distributions (exponential, Weibull, Gompertz),
 #' 2-component mixture distributions, or a user-defined [log] hazard function.
 #' Baseline covariates can be included under a proportional hazards assumption.
+#' Time dependent effects (i.e. non-proportional hazards) can be included by
+#' interacting covariates with time (by specifying them in the \code{tde}
+#' argument); the default behaviour is to interact the covariates with linear
+#' time, however, they can be interacted with some other function of time simply
+#' by using the \code{tdefunction} argument.
+#'
 #' Under the 2-component mixture distributions (obtained by setting
 #' \code{mixture = TRUE}) the baseline survival at time \eqn{t} is taken to be
 #' \eqn{S(t) = p * S_1(t) + (1 - p) * S_2(t)}
@@ -163,8 +182,8 @@
 #'   # treatment variable, with log(hazard ratio) = -0.5, and censoring
 #'   # after 5 years:
 #'   covs <- data.frame(id = 1:100, trt = stats::rbinom(200, 1L, 0.5))
-#'   s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
-#'                 x = covs, betas = c(trt = -0.5), maxt = 5)
+#'   s1 <- simsurv(lambdas = 0.1, gammas = 1.5, betas = c(trt = -0.5)
+#'                 x = covs, , maxt = 5)
 #'   head(s1)
 #'
 #'   # Generate times from a Gompertz model:
@@ -178,6 +197,10 @@
 #'   fn <- function(t, x, betas, ...)
 #'     (-1 + 0.02 * t - 0.03 * t ^ 2 + 0.005 * t ^ 3)
 #'   s4 <- simsurv(loghazard = fn, x = covs, maxt = 1.5)
+#'
+#'   # Generate times from a Weibull model with diminishing treatment effect:
+#'   s5 <- simsurv(lambdas = 0.1, gammas = 1.5, betas = c(trt = -0.5),
+#'                 x = covs, tde(trt 0.05), tdefunction = "log")
 #'
 #'   #-------------- Complex examples
 #'
@@ -241,8 +264,8 @@
 #'   head(times)
 #'
 simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
-                    lambdas, gammas, x, betas, mixture = FALSE,
-                    pmix = 0.5, hazard, loghazard,
+                    lambdas, gammas, x, betas, tde, tdefunction = NULL,
+                    mixture = FALSE, pmix = 0.5, hazard, loghazard,
                     idvar = NULL, ids = NULL, nodes = 15,
                     maxt = NULL, interval = c(1E-8, 500),
                     seed = sample.int(.Machine$integer.max, 1), ...) {
@@ -254,6 +277,8 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     gammas <- NULL
   if (missing(betas))
     betas <- NULL
+  if (missing(tde))
+    tde <- NULL
   if (missing(hazard))
     hazard <- NULL
   if (missing(loghazard))
@@ -285,6 +310,13 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         stop("The named elements in 'betas' should correspond to named ",
              "columns in the data frame specified in 'x'.")
   }
+  if (!is.null(tde)) {
+    tde <- validate_tde(tde)
+    if (!all(names(tde) %in% colnames(x)))
+      stop("The named elements in 'tde' should correspond to named ",
+           "columns in the data frame specified in 'x'.")
+  }
+
   if (!is.null(ids) == is.null(idvar))
     stop("Both 'idvar' and 'ids' must be supplied together.")
   if (!is.null(ids)) {
@@ -295,7 +327,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     N <- nrow(x) # number of individuals
     ids <- seq(N)
   }
-  if (is.null(hazard) && is.null(loghazard)) { # standard parametric
+  if (is.null(hazard) && is.null(loghazard) && is.null(tde)) { # standard parametric
     survival <- get_survival(dist = dist, lambdas = lambdas, gammas = gammas,
                              mixture = mixture, pmix = pmix)
     tt <- sapply(ids, function(i) {
@@ -311,9 +343,39 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
                        u = u_i, ..., interval = interval)$root
       return(t_i)
     })
+  } else if (is.null(hazard) && is.null(loghazard)) { # # standard parametric with tde
+    if (is.null(tdefunction)) {
+      tdefunction <- function(x) x # just returns input value (ie. time)
+    } else if (!is.null(tdefunction)) {
+      tdefunction <- tryCatch(match.fun(tdefunction), error = function(e)
+        stop("'tdefunction' should be a function.", call. = FALSE))
+    }
+    hazard <- get_hazard(dist = dist, lambdas = lambdas, gammas = gammas,
+                         mixture = mixture, pmix = pmix, tde = tde,
+                         tdefunction = tdefunction)
+    tt <- sapply(ids, function(i) {
+      x_i <- subset_df(x, i, idvar = idvar)
+      betas_i <- subset_df(betas, i, idvar = idvar)
+      u_i <- stats::runif(1)
+      # check whether S(t) is still greater than random uniform variable u_i at the
+      # upper limit of uniroot's interval (otherwise uniroot will return an error)
+      at_limit <- rootfn_hazard(interval[2], hazard = hazard, x = x_i,
+                                betas = betas_i, u = u_i, nodes = nodes,
+                                tde = tde, tdefunction = tdefunction)
+      t_i <- if (at_limit > 0) interval[2] else
+        stats::uniroot(rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
+                       u = u_i, nodes = nodes, tde = tde,
+                       tdefunction = tdefunction, interval = interval)$root
+      return(t_i)
+    })
   } else { # user-defined hazard or log hazard
-    if (!is.null(loghazard))
+    if (!is.null(tde))
+      stop("'tde' cannot be specified with a user-defined [log] hazard ",
+           "function; please just incorporate the time dependent effects ",
+           "into the [log] hazard function you are defining.")
+    if (!is.null(loghazard)) {
       hazard <- function(t, x, betas, ...) exp(loghazard(t, x, betas, ...))
+    }
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
@@ -409,6 +471,99 @@ get_survival <- function(dist = c("weibull", "exponential", "gompertz"),
   }
   return(surv)
 }
+
+# Return the hazard function for the specified distribution
+#
+# @param dist The name of the distribution for the baseline hazard
+# @param lambdas The scale parameter(s) for the baseline hazard
+# @param gammas The shape parameter(s) for the baseline hazard
+# @param mixture Logical specifying whether to use a 2-component mixture model
+#   for the baseline hazard distribution
+# @param pmix Scalar specifying the mixture parameter, must be between 0 and 1
+# @param tde Vector of log hazard ratios for the time dependent effects
+# @param tdefunction Optionally, a function to use for the interaction with time
+#   when creating time dependent effects
+get_hazard <- function(dist = c("weibull", "exponential", "gompertz"),
+                       lambdas = NULL, gammas = NULL, mixture = FALSE,
+                       pmix = 0.5, tde, tdefunction = NULL) {
+  validate_lambdas(lambdas = lambdas, dist = dist, mixture = mixture)
+  validate_gammas(gammas = gammas, dist = dist, mixture = mixture)
+  if (pmix < 0 || pmix > 1)
+    stop("'pmix' must be between 0 and 1.", call. = FALSE)
+  if (dist == "weibull" && !mixture) { # weibull hazard
+    haz <- function(t, x, betas, tde, tdefunction) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      if (!is.null(tde))
+        eta <- eta +
+          sum(sapply(names(tde), function(i) tde[[i]] * tdefunction(t) * x[[i]]))
+      basehaz <- gammas[1L] * lambdas[1L] * (t ^ (gammas[1L] - 1))
+      return(basehaz * exp(eta))
+    }
+  } else if (dist == "weibull") { # weibull-weibull hazard
+    haz <- function(t, x, betas, tde, tdefunction) {
+      eta <-  if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      if (!is.null(tde))
+        eta <- eta +
+          sum(sapply(names(tde), function(i) tde[[i]] * tdefunction(t) * x[[i]]))
+      basesurv1 <- exp(-lambdas[1L] * (t ^ gammas[1L]))
+      basesurv2 <- exp(-lambdas[2L] * (t ^ gammas[2L]))
+      basehaz1 <- gammas[1L] * lambdas[1L] * (t ^ (gammas[1L] - 1))
+      basehaz2 <- gammas[2L] * lambdas[2L] * (t ^ (gammas[2L] - 1))
+      denom <- pmix * basesurv1 + (1 - pmix) * basesurv2
+      numer <- pmix * basesurv1 * basehaz1 + (1 - pmix) * basesurv2 * basehaz2
+      basehaz <- numer / denom
+      return(basehaz * exp(eta))
+    }
+  } else if (dist == "exponential" && !mixture) { # exponential hazard
+    haz <- function(t, x, betas, tde, tdefunction) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      if (!is.null(tde))
+        eta <- eta +
+          sum(sapply(names(tde), function(i) tde[[i]] * tdefunction(t) * x[[i]]))
+      basehaz <- lambdas[1L]
+      return(basehaz * exp(eta))
+    }
+  } else if (dist == "exponential") { # exponential-exponential hazard
+    haz <- function(t, x, betas, tde, tdefunction) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      if (!is.null(tde))
+        eta <- eta +
+          sum(sapply(names(tde), function(i) tde[[i]] * tdefunction(t) * x[[i]]))
+      basesurv1 <- exp(-lambdas[1L] * t)
+      basesurv2 <- exp(-lambdas[2L] * t)
+      denom <- pmix * basesurv1 + (1 - pmix) * basesurv2
+      numer <- pmix * basesurv1 * lambdas[1L] + (1 - pmix) * basesurv2 * lambdas[2L]
+      basehaz <- numer / denom
+      return(basehaz * exp(eta))
+    }
+  } else if (dist == "gompertz" && !mixture) { # gompertz hazard
+    haz <- function(t, x, betas, tde, tdefunction) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      if (!is.null(tde))
+        eta <- eta +
+          sum(sapply(names(tde), function(i) tde[[i]] * tdefunction(t) * x[[i]]))
+      basehaz <- lambdas[1L] * exp(gammas[1L] * t)
+      return(basehaz * exp(eta))
+    }
+  } else if (dist == "gompertz") { # gompertz-gompertz hazard
+    stop("Gompertz 2-component mixture with tde not yet implemented.", call. = FALSE)
+    haz <- function(t, x, betas, tde, tdefunction) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      if (!is.null(tde))
+        eta <- eta +
+          sum(sapply(names(tde), function(i) tde[[i]] * tdefunction(t) * x[[i]]))
+      return(NULL)
+    }
+  }
+  return(haz)
+}
+
 
 validate_lambdas <- function(lambdas = NULL, dist, mixture) {
   if (is.null(lambdas)) {
@@ -507,6 +662,17 @@ validate_betas <- function(x) {
     checks <- sapply(x, is.data.frame)
     if (!all(checks))
       stop("'", nm, "' should be a vector, a data frame or a list of data frames.")
+  }
+  x
+}
+
+# Check that x is either NULL, or a named vector
+#
+# @param x Object to check
+validate_tde <- function(x) {
+  nm <- deparse(substitute(x))
+  if (!is.vector(x) || is.null(names(x))) {
+    stop("'", nm, "' should be a named vector.")
   }
   x
 }
