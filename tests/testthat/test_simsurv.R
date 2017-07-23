@@ -21,7 +21,7 @@ nsims <- 50
 npat <- 500
 
 test_that("exponential model returns unbiased estimates", {
-  true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2)
+  true <- list(lambdas = 0.2, X1 = -0.5, X2 = 0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true, dist = "exponential")
   check_bias(sims = sims, true = true, tol = tol)
 })
