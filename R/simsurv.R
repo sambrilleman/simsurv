@@ -271,6 +271,10 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
                     seed = sample.int(.Machine$integer.max, 1), ...) {
   set.seed(seed)
   dist <- match.arg(dist)
+  if (!is.numeric(interval) || !length(interval) == 2)
+    stop("'interval' should a length 2 numeric vector.")
+  if (!all(interval > 0))
+    stop("Both 'interval' limits must be positive.")
   if (missing(lambdas))
     lambdas <- NULL
   if (missing(gammas))
@@ -338,9 +342,15 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_surv(interval[2], survival = survival, x = x_i,
                               betas = betas_i, u = u_i, ...)
-      t_i <- if (at_limit > 0) interval[2] else
-        stats::uniroot(rootfn_surv, survival = survival, x = x_i, betas = betas_i,
-                       u = u_i, ..., interval = interval)$root
+      if (is.nan(at_limit)) {
+        STOP_nan_at_limit()
+      } else if (at_limit > 0) {
+        STOP_increase_limit()
+      } else {
+        t_i <- stats::uniroot(
+          rootfn_surv, survival = survival, x = x_i, betas = betas_i,
+          u = u_i, ..., interval = interval)$root
+      }
       return(t_i)
     })
   } else if (is.null(hazard) && is.null(loghazard)) { # # standard parametric with tde
@@ -353,6 +363,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     hazard <- get_hazard(dist = dist, lambdas = lambdas, gammas = gammas,
                          mixture = mixture, pmix = pmix, tde = tde,
                          tdefunction = tdefunction)
+    qq <- get_quadpoints(nodes)
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
@@ -360,12 +371,18 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_hazard(interval[2], hazard = hazard, x = x_i,
-                                betas = betas_i, u = u_i, nodes = nodes,
+                                betas = betas_i, u = u_i, qq = qq,
                                 tde = tde, tdefunction = tdefunction)
-      t_i <- if (at_limit > 0) interval[2] else
-        stats::uniroot(rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
-                       u = u_i, nodes = nodes, tde = tde,
-                       tdefunction = tdefunction, interval = interval)$root
+      if (is.nan(at_limit)) {
+        STOP_nan_at_limit()
+      } else if (at_limit > 0) {
+        STOP_increase_limit()
+      } else {
+        t_i <- stats::uniroot(
+          rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
+          u = u_i, qq = qq, tde = tde, tdefunction = tdefunction,
+          interval = interval)$root
+      }
       return(t_i)
     })
   } else { # user-defined hazard or log hazard
@@ -376,6 +393,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     if (!is.null(loghazard)) {
       hazard <- function(t, x, betas, ...) exp(loghazard(t, x, betas, ...))
     }
+    qq <- get_quadpoints(nodes)
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
@@ -383,10 +401,16 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_hazard(interval[2], hazard = hazard, x = x_i,
-                                betas = betas_i, u = u_i, nodes = nodes, ...)
-      t_i <- if (at_limit > 0) interval[2] else
-        stats::uniroot(rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
-                       u = u_i, nodes = nodes, ..., interval = interval)$root
+                                betas = betas_i, u = u_i, qq = qq, ...)
+      if (is.nan(at_limit)) {
+        STOP_nan_at_limit()
+      } else if (at_limit > 0) {
+        STOP_increase_limit()
+      } else {
+        t_i <- stats::uniroot(
+          rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
+          u = u_i, qq = qq, ..., interval = interval)$root
+      }
       return(t_i)
     })
   }
@@ -603,18 +627,18 @@ validate_gammas <- function(gammas = NULL, dist, mixture) {
 # @param t The event time, unknown but solution to be found using \code{uniroot}
 # @param hazard The user-defined hazard function, with named arguments t, x,
 #   betas, ...
-# @param x Vector of covariate data to be supplied to hazard
-# @param betas Vector of parameter values to be supplied to hazard
-# @param nodes Integer specifying the number of quadrature nodes
+# @param x Vector of covariate data to be supplied to hazard.
+# @param betas Vector of parameter values to be supplied to hazard.
+# @param qq The standardised quadpoints and quadweights returned by a call to
+#   get_quadpoints.
 # @param ... Further arguments passed to hazard.
 rootfn_hazard <- function(t, hazard, x = NULL, betas = NULL,
-                   u = stats::runif(1), nodes = 15, ...) {
-  qq <- get_quadpoints(nodes)
-  qpts <- lapply(qq$points,  unstandardise_quadpoints,  0, t)
-  qwts <- lapply(qq$weights, unstandardise_quadweights, 0, t)
-  cumhaz <- sum(sapply(seq(nodes), function(q) {
+                   u = stats::runif(1), qq = get_quadpoints(nodes = 15), ...) {
+  qpts <- unstandardise_quadpoints(qq$points, 0, t)
+  qwts <- unstandardise_quadweights(qq$weights, 0, t)
+  cumhaz <- sum(unlist(lapply(1:length(qpts), function(q) {
     qwts[[q]] * hazard(t = qpts[[q]], x = x, betas = betas, ...)
-  }))
+  })))
   surv <- exp(-cumhaz)
   return(surv - u)
 }
@@ -716,41 +740,37 @@ check_for_idvar_and_id <- function(df, idvar, id) {
     stop("The individual '", id, "' does not appear in all data frames.", call. = FALSE)
 }
 
+# Return consistent error messages
+STOP_nan_at_limit <- function() {
+  stop("Could not evaluate the survival probability for some individuals at ",
+       "the upper limit of 'interval' (likely because the hazard was infinite). ",
+       "Try specifying a smaller upper limit using the 'interval' argument.",
+       call. = FALSE)
+}
+STOP_increase_limit <- function() {
+  stop("Some individuals have a positive survival probability at the upper ",
+       "limit of 'interval'. Consider specifying a larger upper limit using ",
+       "the 'interval' argument.", call. = FALSE)
+}
+
+
 # Convert a standardised quadrature node to an unstandardised value based on
 # the specified integral limits
 #
-# @param t An unstandardised quadrature node
-# @param a The lower limit(s) of the integral, possibly a vector
-# @param b The upper limit(s) of the integral, possibly a vector
+# @param t A vector of standardised quadrature nodes
+# @param a The lower limit of the integral
+# @param b The upper limit of the integral
 unstandardise_quadpoints <- function(t, a, b) {
-  if (!identical(length(t), 1L) || !is.numeric(t))
-    stop("'t' should be a single numeric value.", call. = FALSE)
-  if (!all(is.numeric(a), is.numeric(b)))
-    stop("'a' and 'b' should be numeric.", call. = FALSE)
-  if (!length(a) %in% c(1L, length(b)))
-    stop("'a' and 'b' should be vectors of length 1, or, be the same length.", call. = FALSE)
-  if (any((b - a) < 0))
-    stop("The upper limits for the integral ('b' values) should be greater than ",
-         "the corresponding lower limits for the integral ('a' values).", call. = FALSE)
   ((b - a) / 2) * t + ((b + a) / 2)
 }
 
 # Convert a standardised quadrature weight to an unstandardised value based on
 # the specified integral limits
 #
-# @param t An unstandardised quadrature weight
-# @param a The lower limit(s) of the integral, possibly a vector
-# @param b The upper limit(s) of the integral, possibly a vector
+# @param t A vector of standardised quadrature weights
+# @param a The lower limit of the integral
+# @param b The upper limit of the integral
 unstandardise_quadweights <- function(t, a, b) {
-  if (!identical(length(t), 1L) || !is.numeric(t))
-    stop("'t' should be a single numeric value.", call. = FALSE)
-  if (!all(is.numeric(a), is.numeric(b)))
-    stop("'a' and 'b' should be numeric.", call. = FALSE)
-  if (!length(a) %in% c(1L, length(b)))
-    stop("'a' and 'b' should be vectors of length 1, or, be the same length.", call. = FALSE)
-  if (any((b - a) < 0))
-    stop("The upper limits for the integral ('b' values) should be greater than ",
-         "the corresponding lower limits for the integral ('a' values).", call. = FALSE)
   ((b - a) / 2) * t
 }
 
