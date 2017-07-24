@@ -1,4 +1,4 @@
-sim_run <- function(i, npat, true, dist, tdefunction = NULL) {
+sim_run <- function(i, npat, true, dist, tdefunction = NULL, ...) {
   covs <- data.frame(id = 1:npat,
                      X1 = stats::rbinom(npat, 1L, 0.5),
                      X2 = stats::rnorm(npat, 2, 5))
@@ -8,7 +8,7 @@ sim_run <- function(i, npat, true, dist, tdefunction = NULL) {
     s1 <- simsurv(dist = dist,
                   lambdas = true$lambdas,
                   gammas = true$gammas,
-                  betas = betas, x = covs, maxt = 10)
+                  betas = betas, x = covs, maxt = 10, ...)
     phreg_data <- merge(covs, s1, by = "id")
     phreg_dist <- if (dist == "exponential") "weibull" else dist
     phreg_shape <- if (dist == "exponential") 1 else 0
@@ -19,7 +19,7 @@ sim_run <- function(i, npat, true, dist, tdefunction = NULL) {
                   lambdas = true$lambdas,
                   gammas = true$gammas,
                   betas = betas, x = covs, maxt = 10,
-                  tde = tde, tdefunction = tdefunction)
+                  tde = tde, tdefunction = tdefunction, ...)
     if (is.null(tdefunction)) {
       ttfunction <- function(x, t, ...) x * t
     } else {
