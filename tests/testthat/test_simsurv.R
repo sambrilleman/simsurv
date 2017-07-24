@@ -53,7 +53,6 @@ test_that("tde (NULL) exponential model returns unbiased estimates", {
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
                  dist = "exponential", tdefunction = tdefunction)
-  print(sims)
   check_bias(sims = sims, true = true, tol = tol, type = "bias")
 })
 
