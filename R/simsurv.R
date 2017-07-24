@@ -275,6 +275,8 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     stop("'interval' should a length 2 numeric vector.")
   if (!all(interval > 0))
     stop("Both 'interval' limits must be positive.")
+  if (!is.null(maxt) && (interval[2] <= maxt))
+    stop("The upper limit of 'interval' must be greater than 'maxt'.")
   if (missing(lambdas))
     lambdas <- NULL
   if (missing(gammas))
@@ -345,7 +347,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
-        STOP_increase_limit()
+        if (is.null(maxt)) { # no censoring time
+          STOP_increase_limit()
+        } else { # individual will be censored anyway, so just return interval[2]
+          return(interval[2])
+        }
       } else {
         t_i <- stats::uniroot(
           rootfn_surv, survival = survival, x = x_i, betas = betas_i,
@@ -376,7 +382,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
-        STOP_increase_limit()
+        if (is.null(maxt)) { # no censoring time
+          STOP_increase_limit()
+        } else { # individual will be censored anyway, so just return interval[2]
+          return(interval[2])
+        }
       } else {
         t_i <- stats::uniroot(
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
@@ -405,7 +415,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
-        STOP_increase_limit()
+        if (is.null(maxt)) { # no censoring time
+          STOP_increase_limit()
+        } else { # individual will be censored anyway, so just return interval[2]
+          return(interval[2])
+        }
       } else {
         t_i <- stats::uniroot(
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,

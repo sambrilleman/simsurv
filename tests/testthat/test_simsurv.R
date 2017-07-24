@@ -21,9 +21,9 @@ nsims <- 50
 npat <- 500
 
 test_that("exponential model returns unbiased estimates", {
-  true <- list(lambdas = 0.2, X1 = -0.5, X2 = 0.2)
+  true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "exponential", interval = c(1E-8, 2000))
+                 dist = "exponential")
   check_bias(sims = sims, true = true, tol = tol)
 })
 
@@ -52,8 +52,7 @@ test_that("tde (NULL) exponential model returns unbiased estimates", {
   true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "exponential", tdefunction = tdefunction,
-                 interval = c(1E-8, 2000))
+                 dist = "exponential", tdefunction = tdefunction)
   print(sims)
   check_bias(sims = sims, true = true, tol = tol, type = "bias")
 })
@@ -87,8 +86,7 @@ test_that("tde (log) exponential model returns unbiased estimates", {
   true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "exponential", tdefunction = tdefunction,
-                 interval = c(1E-8, 2000))
+                 dist = "exponential", tdefunction = tdefunction)
   check_bias(sims = sims, true = true, tol = tol)
 })
 
