@@ -23,7 +23,7 @@ npat <- 500
 test_that("exponential model returns unbiased estimates", {
   true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "exponential")
+                 dist = "exponential", interval = c(1E-8, 10000))
   check_bias(sims = sims, true = true, tol = tol)
 })
 
@@ -43,8 +43,8 @@ test_that("gompertz model returns unbiased estimates", {
 
 #------- Standard parametric models with tde (interaction with time)
 
-nsims <- 50
-npat <- 500
+nsims <- 100
+npat <- 1000
 tdefunction <- NULL
 
 test_that("tde (NULL) exponential model returns unbiased estimates", {
@@ -73,38 +73,4 @@ test_that("tde (NULL) gompertz model returns unbiased estimates", {
                  dist = "gompertz", tdefunction = tdefunction)
   check_bias(sims = sims, true = true, tol = tol)
 })
-
-#------- Standard parametric models with tde (interaction with log time)
-
-nsims <- 50
-npat <- 500
-tdefunction <- "log"
-
-test_that("tde (log) exponential model returns unbiased estimates", {
-  testthat::skip_on_cran()
-  true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2,
-               X1tt = 0.1, X2tt = -0.2)
-  sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "exponential", tdefunction = tdefunction)
-  check_bias(sims = sims, true = true, tol = tol)
-})
-
-test_that("tde (log) weibull model returns unbiased estimates", {
-  testthat::skip_on_cran()
-  true <- list(lambdas = 0.1, gammas = 1.5, X1 = -0.5, X2 = 0.2,
-               X1tt = 0.1, X2tt = -0.2)
-  sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "weibull", tdefunction = tdefunction)
-  check_bias(sims = sims, true = true, tol = tol)
-})
-
-test_that("tde (log) gompertz model returns unbiased estimates", {
-  testthat::skip_on_cran()
-  true <- list(lambdas = 0.1, gammas = .7, X1 = -0.5, X2 = 0.2,
-               X1tt = 0.1, X2tt = -0.2)
-  sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "gompertz", tdefunction = tdefunction)
-  check_bias(sims = sims, true = true, tol = tol)
-})
-
 
