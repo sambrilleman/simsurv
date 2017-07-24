@@ -588,7 +588,11 @@ get_hazard <- function(dist = c("weibull", "exponential", "gompertz"),
   return(haz)
 }
 
-
+# Ensure the vector of lambdas/gammas is positive and the correct length
+#
+# @param lambdas,gammas The user input to the lambdas/gammas argument
+# @param dist Character string specifying the survival distribution
+# @param mixture Logical specifying whether to use a mixture distribution
 validate_lambdas <- function(lambdas = NULL, dist, mixture) {
   if (is.null(lambdas)) {
     stop("'lambdas' must be specified.", call. = FALSE)
@@ -600,7 +604,6 @@ validate_lambdas <- function(lambdas = NULL, dist, mixture) {
   if (any(lambdas < 0))
     stop("'lambdas' should be positive.", call. = FALSE)
 }
-
 validate_gammas <- function(gammas = NULL, dist, mixture) {
   if (dist == "exponential") { # exponential
     if (!is.null(gammas))
@@ -740,7 +743,7 @@ check_for_idvar_and_id <- function(df, idvar, id) {
     stop("The individual '", id, "' does not appear in all data frames.", call. = FALSE)
 }
 
-# Return consistent error messages
+# Consistent error messages
 STOP_nan_at_limit <- function() {
   stop("Could not evaluate the survival probability for some individuals at ",
        "the upper limit of 'interval' (likely because the hazard was infinite). ",
@@ -748,9 +751,9 @@ STOP_nan_at_limit <- function() {
        call. = FALSE)
 }
 STOP_increase_limit <- function() {
-  stop("Some individuals have a positive survival probability at the upper ",
-       "limit of 'interval'. Consider specifying a larger upper limit using ",
-       "the 'interval' argument.", call. = FALSE)
+  stop("Could not find the simulated survival time for some individuals within ",
+       "the specified interval. Consider increasing the upper limit of the ",
+       "interval using the 'interval' argument.", call. = FALSE)
 }
 
 
