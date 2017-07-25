@@ -5,7 +5,9 @@ simsurv
 
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/simsurv)](http://www.r-pkg.org/pkg/simsurv) [![License](https://img.shields.io/badge/License-GPL%20%28%3E=%203%29-brightgreen.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
 
-**simsurv** is an R package that allows the user to simulate survival times from standard parametric survival distributions (exponential, Weibull, and Gompertz), 2-component mixture distributions, or a user-defined \[log\] hazard function. Baseline covariates can be included under a proportional hazards assumption. Under the 2-component mixture distributions the baseline survival at time *t* is taken to be *S(t) = p x S\_1(t) + (1 - p) x S\_2(t)* where *S\_1(t)* and *S\_2(t)* are the baseline survival under each component of the mixture distribution and *p* is the mixing parameter. Each component of the mixture distribution is assumed to be either exponential, Weibull or Gompertz. The 2-component mixture distributions can allow for a variety of flexible baseline hazard functions (see Crowther and Lambert (2013) for some examples).
+**simsurv** is an R package that allows the user to simulate survival times from standard parametric survival distributions (exponential, Weibull, and Gompertz), 2-component mixture distributions, or a user-defined \[log\] hazard function. Baseline covariates can be included under a proportional hazards assumption. Time dependent effects (i.e. non-proportional hazards) can be included by interacting covariates with linear time or some transformation of time.
+
+Under the 2-component mixture distributions the baseline survival at time *t* is taken to be *S(t) = p x S\_1(t) + (1 - p) x S\_2(t)* where *S\_1(t)* and *S\_2(t)* are the baseline survival under each component of the mixture distribution and *p* is the mixing parameter. Each component of the mixture distribution is assumed to be either exponential, Weibull or Gompertz. The 2-component mixture distributions can allow for a variety of flexible baseline hazard functions (see Crowther and Lambert (2013) for some examples).
 
 If the user wishes to provide a user-defined \[log\] hazard function (instead of using one of the standard parametric survival distributions) then this is also possible. If a user-defined \[log\] hazard function is specified, then this is allowed to be time-dependent, and the resulting cumulative hazard function does not need to have a closed-form solution. The survival times are generated using the approach described in Crowther and Lambert (2013), whereby the cumulative hazard is evaluated using numerical quadrature and survival times are generated using an iterative algorithm which nests the quadrature-based evaluation of the cumulative hazard inside Brent's (1973) univariate root finder. Not requiring a closed form solution to the cumulative hazard function has the benefit that survival times can be generated for complex models such as joint longitudinal and survival models; the package documentation provides an example of this.
 
@@ -46,12 +48,12 @@ s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
               x = covs, betas = c(trt = -0.5), maxt = 5)
 head(s1)
 #>   id eventtime status
-#> 1  1  3.957210      1
-#> 2  2  5.000000      0
-#> 3  3  5.000000      0
-#> 4  4  5.000000      0
-#> 5  5  4.102603      1
-#> 6  6  2.706572      1
+#> 1  1 5.0000000      0
+#> 2  2 5.0000000      0
+#> 3  3 4.9634817      1
+#> 4  4 4.4749500      1
+#> 5  5 0.7077079      1
+#> 6  6 2.8800222      1
 ```
 
 Generate times from a Gompertz model:

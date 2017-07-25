@@ -22,6 +22,9 @@ knitr::opts_chunk$set(
 standard parametric survival distributions (exponential, Weibull, and Gompertz),
 2-component mixture distributions, or a user-defined [log] hazard function.
 Baseline covariates can be included under a proportional hazards assumption.
+Time dependent effects (i.e. non-proportional hazards) can be included by 
+interacting covariates with linear time or some transformation of time.
+
 Under the 2-component mixture distributions the baseline survival at time 
 *t* is taken to be *S(t) = p x S_1(t) + (1 - p) x S_2(t)*
 where *S_1(t)* and *S_2(t)* are the baseline survival under each component of 

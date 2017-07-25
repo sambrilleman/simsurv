@@ -8,7 +8,9 @@ Maintainer: Sam Brilleman <sam.brilleman@monash.edu>
 Description: Simulate survival times from standard parametric survival 
     distributions (exponential, Weibull, Gompertz), 2-component mixture 
     distributions, or a user-defined [log] hazard function. Baseline 
-    covariates can be included under a proportional hazards assumption.
+    covariates can be included under a proportional hazards assumption. Time 
+    dependent effects (i.e. non-proportional hazards) can be included by 
+    interacting covariates with linear time or some transformation of time.
     The 2-component mixture distributions can allow for a variety of flexible
     baseline hazard functions. If the user wishes to provide a user-defined 
     [log] hazard function then this is also possible, and the resulting
