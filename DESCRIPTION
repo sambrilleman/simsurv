@@ -27,4 +27,5 @@ Suggests:
     survival (>= 2.40.1),
     testthat (>= 1.0.2)
 LazyData: true
+BugReports: https://github.com/sambrilleman/simsurv/issues
 RoxygenNote: 6.0.1

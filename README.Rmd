@@ -172,7 +172,7 @@ head(s1)
 
 ## Bug Reports
 
-If you find any bugs, please report them via email to [Sam Brilleman](mailto:sam.brilleman@monash.edu).
+If you find any bugs, please [file an issue on GitHub](https://github.com/sambrilleman/simsurv/issues) or report them via email to [Sam Brilleman](mailto:sam.brilleman@monash.edu).
 
 ## References
 

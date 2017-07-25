@@ -46,12 +46,12 @@ s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
               x = covs, betas = c(trt = -0.5), maxt = 5)
 head(s1)
 #>   id eventtime status
-#> 1  1  5.000000      0
-#> 2  2  3.783668      1
-#> 3  3  1.873519      1
+#> 1  1  3.957210      1
+#> 2  2  5.000000      0
+#> 3  3  5.000000      0
 #> 4  4  5.000000      0
-#> 5  5  5.000000      0
-#> 6  6  5.000000      0
+#> 5  5  4.102603      1
+#> 6  6  2.706572      1
 ```
 
 Generate times from a Gompertz model:
@@ -149,7 +149,7 @@ head(s1)
 Bug Reports
 -----------
 
-If you find any bugs, please report them via email to [Sam Brilleman](mailto:sam.brilleman@monash.edu).
+If you find any bugs, please [file an issue on GitHub](https://github.com/sambrilleman/simsurv/issues) or report them via email to [Sam Brilleman](mailto:sam.brilleman@monash.edu).
 
 References
 ----------
