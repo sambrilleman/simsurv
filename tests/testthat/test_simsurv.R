@@ -1,4 +1,5 @@
 library(simsurv)
+stopifnot(require(testthat))
 stopifnot(require(survival))
 stopifnot(require(eha))
 
@@ -12,15 +13,16 @@ source(file.path("helpers", "is_exponential.R"))
 source(file.path("helpers", "is_weibull.R"))
 source(file.path("helpers", "is_gompertz.R"))
 
+run_sims <- FALSE
+nsims <- 100
+npat <- 1000
 tol <- 0.05
 set.seed(9898)
 
 #------- Standard parametric models
 
-nsims <- 50
-npat <- 500
-
 test_that("exponential model returns unbiased estimates", {
+  testthat::skip_if_not(run_sims, "Not running simulation tests.")
   true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
                  dist = "exponential", interval = c(1E-8, 10000))
@@ -28,6 +30,7 @@ test_that("exponential model returns unbiased estimates", {
 })
 
 test_that("weibull model returns unbiased estimates", {
+  testthat::skip_if_not(run_sims, "Not running simulation tests.")
   true <- list(lambdas = 0.1, gammas = 1.5, X1 = -0.5, X2 = 0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
                  dist = "weibull")
@@ -35,6 +38,7 @@ test_that("weibull model returns unbiased estimates", {
 })
 
 test_that("gompertz model returns unbiased estimates", {
+  testthat::skip_if_not(run_sims, "Not running simulation tests.")
   true <- list(lambdas = 0.1, gammas = .7, X1 = -0.5, X2 = 0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
                  dist = "gompertz")
@@ -43,12 +47,10 @@ test_that("gompertz model returns unbiased estimates", {
 
 #------- Standard parametric models with tde (interaction with time)
 
-nsims <- 100
-npat <- 1000
 tdefunction <- NULL
 
 test_that("tde (NULL) exponential model returns unbiased estimates", {
-  testthat::skip_on_cran()
+  testthat::skip_if_not(run_sims, "Not running simulation tests.")
   true <- list(lambdas = 0.1, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
@@ -57,7 +59,7 @@ test_that("tde (NULL) exponential model returns unbiased estimates", {
 })
 
 test_that("tde (NULL) weibull model returns unbiased estimates", {
-  testthat::skip_on_cran()
+  testthat::skip_if_not(run_sims, "Not running simulation tests.")
   true <- list(lambdas = 0.1, gammas = 1.5, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
@@ -66,7 +68,7 @@ test_that("tde (NULL) weibull model returns unbiased estimates", {
 })
 
 test_that("tde (NULL) gompertz model returns unbiased estimates", {
-  testthat::skip_on_cran()
+  testthat::skip_if_not(run_sims, "Not running simulation tests.")
   true <- list(lambdas = 0.1, gammas = .7, X1 = -0.5, X2 = 0.2,
                X1tt = 0.1, X2tt = -0.1)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
