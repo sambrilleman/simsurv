@@ -1,7 +1,7 @@
 Package: simsurv
 Type: Package
 Title: Simulate Survival Data
-Version: 0.0.1
+Version: 0.1.0
 Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu", 
              role = c("cre", "aut", "cph")))
 Maintainer: Sam Brilleman <sam.brilleman@monash.edu>
@@ -15,8 +15,8 @@ Description: Simulate survival times from standard parametric survival
     baseline hazard functions. If the user wishes to provide a user-defined 
     [log] hazard function then this is also possible, and the resulting
     cumulative hazard function does not need to have a closed-form solution. 
-    Note that this package is modelled on the survsim package available in 
-    the Stata software (see Crowther and Lambert (2012, 2013)).
+    Note that this package is modelled on the 'survsim' package available in 
+    the 'Stata' software (see Crowther and Lambert (2012, 2013)).
 License: GPL (>=3) | file LICENSE
 Depends:
     R (>= 3.3.2)

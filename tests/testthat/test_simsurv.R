@@ -41,7 +41,7 @@ test_that("gompertz model returns unbiased estimates", {
   testthat::skip_if_not(run_sims, "Not running simulation tests.")
   true <- list(lambdas = 0.1, gammas = .7, X1 = -0.5, X2 = 0.2)
   sims <- sapply(seq(nsims), sim_run, npat = npat, true = true,
-                 dist = "gompertz")
+                 dist = "gompertz", interval = c(1E-8, 10000))
   check_bias(sims = sims, true = true, tol = tol)
 })
 

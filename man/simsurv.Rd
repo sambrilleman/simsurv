@@ -277,7 +277,7 @@ This package is modelled on the user-written \code{survsim} package
 \references{
 Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
   complex survival data. \emph{Statistics in Medicine} \strong{32},
-  4118--4134. \url{doi:10.1002/sim.5823}
+  4118--4134. \doi{10.1002/sim.5823}
 
   Bender R, Augustin T, and Blettner M. (2005) Generating survival times to
   simulate Cox proportional hazards models. \emph{Statistics in Medicine}

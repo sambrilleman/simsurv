@@ -1,6 +1,7 @@
-### simsurv 0.0.1 (X/X/2017)
+### simsurv 0.1.0 (26/7/2017)
   
 Initial CRAN release
+
 
 ---
 NEWS Template 
