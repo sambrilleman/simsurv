@@ -1,3 +1,7 @@
+### simsurv 0.1.0-9000 (27/7/2017)
+  
+Under development
+
 ### simsurv 0.1.0 (27/7/2017)
   
 Initial CRAN release
