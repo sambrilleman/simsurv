@@ -1,3 +1,14 @@
+## Resubmission
+This is a resubmission. In this version I have:
+
+* Added a URL to the Crowther and Lambert (2012) reference in the Description.
+  Note that a doi or arXiv link is not available.
+  
+* Added a DOI to the Crowther and Lambert (2013) reference in the Description.
+
+* Removed the use of "[log] hazard" from the Description and replaced it with 
+  the more explicit wording "hazard or log hazard".
+
 ## Release summary
 This is the first CRAN release of simsurv.
 

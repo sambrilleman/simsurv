@@ -7,16 +7,18 @@ Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu",
 Maintainer: Sam Brilleman <sam.brilleman@monash.edu>
 Description: Simulate survival times from standard parametric survival 
     distributions (exponential, Weibull, Gompertz), 2-component mixture 
-    distributions, or a user-defined [log] hazard function. Baseline 
+    distributions, or a user-defined hazard or log hazard function. Baseline 
     covariates can be included under a proportional hazards assumption. Time 
     dependent effects (i.e. non-proportional hazards) can be included by 
     interacting covariates with linear time or some transformation of time.
     The 2-component mixture distributions can allow for a variety of flexible
     baseline hazard functions. If the user wishes to provide a user-defined 
-    [log] hazard function then this is also possible, and the resulting
+    hazard or log hazard function then this is also possible, and the resulting
     cumulative hazard function does not need to have a closed-form solution. 
     Note that this package is modelled on the 'survsim' package available in 
-    the 'Stata' software (see Crowther and Lambert (2012, 2013)).
+    the 'Stata' software (see Crowther and Lambert (2012) 
+    <http://www.stata-journal.com/sjpdf.html?articlenum=st0275> or 
+    Crowther and Lambert (2013) <doi:10.1002/sim.5823>).
 License: GPL (>=3) | file LICENSE
 Depends:
     R (>= 3.3.2)

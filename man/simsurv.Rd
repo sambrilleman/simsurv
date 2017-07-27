@@ -43,12 +43,12 @@ mixture distribution is being used then \code{betas} should provide the log haza
 ratios for each of the baseline covariates that is to be included in the linear
 predictor of the proportional hazards model. This is most easily specified
 as a named vector (see the \strong{Examples}). Alternatively, if a
-user-defined baseline hazard function is provided via
-the \code{hazard} or \code{loghazard} argument, then \code{betas} can be
+user-defined baseline hazard (or log hazard) function is provided via
+the \code{hazard} (or \code{loghazard}) argument, then \code{betas} can be
 specified as a vector, a data frame, or a list of data frames, and the
-user-defined [log] hazard function should extract named elements of
-\code{betas} however necessary in order to calculate the [log] hazard for
-each individual. See the \strong{Examples}.}
+of user-defined hazard (or log hazard) function should extract named elements
+\code{betas} however necessary in order to calculate the hazard (or log
+hazard) for each individual. See the \strong{Examples}.}
 
 \item{tde}{A named vector, containing the "true" parameters that will be used
 to create time dependent effects (i.e. non-proportional hazards). The
@@ -123,13 +123,13 @@ A data frame with a row for each individual, and the following three
 }
 \description{
 Simulate survival times from standard parametric survival distributions,
-2-component mixture distributions, or a user-defined [log] hazard
+2-component mixture distributions, or a user-defined hazard or log hazard
 function.
 }
 \details{
 The \code{simsurv} function simulates survival times from
 standard parametric survival distributions (exponential, Weibull, Gompertz),
-2-component mixture distributions, or a user-defined [log] hazard function.
+2-component mixture distributions, or a user-defined hazard or log hazard function.
 Baseline covariates can be included under a proportional hazards assumption.
 Time dependent effects (i.e. non-proportional hazards) can be included by
 interacting covariates with time (by specifying them in the \code{tde}
@@ -147,11 +147,11 @@ distribution is assumed to be either exponential, Weibull or Gompertz.
 The 2-component mixture distributions can allow for a variety of flexible
 baseline hazard functions (see Crowther and Lambert (2013) for some examples).
 
-If the user wishes to provide a user-defined [log] hazard function (instead
-of using one of the standard parametric survival distributions) then this is
-also possible via the \code{hazard} or \code{loghazard} argument.
-If a user-defined [log] hazard function is specified, then this is allowed
-to be time-dependent, and the resulting cumulative hazard function
+If the user wishes to provide a user-defined hazard or log hazard function
+(instead of using one of the standard parametric survival distributions) then
+this is also possible via the \code{hazard} or \code{loghazard} argument.
+If a user-defined hazard or log hazard function is specified, then this is
+allowed to be time-dependent, and the resulting cumulative hazard function
 does not need to have a closed-form solution. The survival times are
 generated using the approach described in Crowther and Lambert (2013),
 whereby the cumulative hazard is evaluated using numerical quadrature and
