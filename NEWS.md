@@ -1,7 +1,11 @@
-### simsurv 0.1.0-9000 (27/7/2017)
+### simsurv 0.2.0 (16/2/2018) 
+ 
+#### New features    
+   * Added user-specified cumulative hazard or log cumulative hazard
+   * Added vignette
+   * TO DO -- Added analytical solutions for generating survival times for standard distributions instead of using numeric root finding
+ 
   
-Under development
-
 ### simsurv 0.1.0 (27/7/2017)
   
 Initial CRAN release
