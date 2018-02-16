@@ -71,6 +71,14 @@
 #'   \code{t}, \code{x}, and \code{betas}. This function should return the
 #'   log hazard at time \code{t} for an individual with covariates supplied via
 #'   \code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.
+#' @param cumhazard Optionally, a user-defined cumulative hazard function, with
+#'   arguments \code{t}, \code{x}, and \code{betas}. This function should return the
+#'   cumulative hazard at time \code{t} for an individual with covariates supplied
+#'   via \code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.
+#' @param logcumhazard Optionally, a user-defined log cumulative hazard function, with
+#'   arguments \code{t}, \code{x}, and \code{betas}. This function should return the
+#'   log cumulative hazard at time \code{t} for an individual with covariates supplied
+#'   via \code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.
 #' @param idvar The name of the ID variable identifying individuals. This is
 #'   only required when \code{x} (and \code{betas} if it is supplied as a
 #'   data frame) contains multiple rows per individual. Otherwise, if
@@ -88,7 +96,7 @@
 #' @param nodes Integer specifying the number of quadrature nodes to use for
 #'   the Gauss-Kronrod quadrature. Can be 7, 11, or 15.
 #' @param interval The interval over which to search for the
-#'   \code{\link[stats]{uniroot}} corresponding to each simulated event time.
+#'   \code{\link{uniroot}} corresponding to each simulated event time.
 #' @param seed The \code{\link[=set.seed]{seed}} to use.
 #' @param ... Other arguments passed to \code{hazard} or \code{loghazard}.
 #'
@@ -122,7 +130,7 @@
 #' whereby the cumulative hazard is evaluated using numerical quadrature and
 #' survival times are generated using an iterative algorithm which nests the
 #' quadrature-based evaluation of the cumulative hazard inside Brent's (1973)
-#' univariate root finder (for the latter the \code{\link[stats]{uniroot}}
+#' univariate root finder (for the latter the \code{\link{uniroot}}
 #' function is used). Not requiring a closed form solution to the cumulative
 #' hazard function has the benefit that survival times can be generated for
 #' complex models such as joint longitudinal and survival models; the
@@ -137,13 +145,13 @@
 #' \eqn{S(t) = exp(-lambda * t ^ {gamma})}.
 #'
 #' Note that this parameterisation differs from the one used by
-#' \code{\link[stats]{dweibull}} or the \code{\link[eha]{phreg}} modelling
+#' \code{\link{dweibull}} or the \code{\link[eha]{phreg}} modelling
 #' function in the \pkg{eha} package. The parameterisation used in those
 #' functions can be achieved by transforming the scale parameter via the
 #' relationship \eqn{b = lambda ^ {-1 / gamma}}, or equivalently
 #' \eqn{lambda = b ^ {-gamma}} where \eqn{b} is the scale parameter under
 #' the parameterisation of the Weibull distribution used by
-#' \code{\link[stats]{dweibull}} or \code{\link[eha]{phreg}}.
+#' \code{\link{dweibull}} or \code{\link[eha]{phreg}}.
 #' }
 #'
 #' @note This package is modelled on the user-written \code{survsim} package
@@ -266,6 +274,7 @@
 simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
                     lambdas, gammas, x, betas, tde, tdefunction = NULL,
                     mixture = FALSE, pmix = 0.5, hazard, loghazard,
+                    cumhazard, logcumhazard,
                     idvar = NULL, ids = NULL, nodes = 15,
                     maxt = NULL, interval = c(1E-8, 500),
                     seed = sample.int(.Machine$integer.max, 1), ...) {
@@ -289,8 +298,14 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     hazard <- NULL
   if (missing(loghazard))
     loghazard <- NULL
-  if (!is.null(hazard) && !is.null(loghazard))
-    stop("'hazard' and 'loghazard' cannot both be specified.")
+  if (missing(cumhazard))
+    cumhazard <- NULL
+  if (missing(logcumhazard))
+    logcumhazard <- NULL
+  user_defined <- length(c(hazard, loghazard, cumhazard, logcumhazard))
+  if (user_defined > 1L)
+    stop("Only one of 'hazard', 'loghazard', 'cumhazard' ",
+         "or 'logcumhazard' can be specified.")
   ok_args <- c("t", "x", "betas")
   if (!is.null(hazard)) {
     if (!is.function(hazard))
@@ -308,10 +323,26 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       stop("'loghazard' function should have the following named arguments: ",
            paste(ok_args, collapse = ", "))
   }
+  if (!is.null(cumhazard)) {
+    if (!is.function(cumhazard))
+      stop("'cumhazard' should be a function.")
+    nm_args <- names(formals(cumhazard))
+    if (!all(ok_args %in% nm_args))
+      stop("'cumhazard' function should have the following named arguments: ",
+           paste(ok_args, collapse = ", "))
+  }
+  if (!is.null(logcumhazard)) {
+    if (!is.function(logcumhazard))
+      stop("'logcumhazard' should be a function.")
+    nm_args <- names(formals(logcumhazard))
+    if (!all(ok_args %in% nm_args))
+      stop("'logcumhazard' function should have the following named arguments: ",
+           paste(ok_args, collapse = ", "))
+  }
   x <- validate_x(x)
   if (!is.null(betas)) {
     betas <- validate_betas(betas)
-    if (!is(betas, "list") && is.vector(betas) &&
+    if (!user_defined && !is(betas, "list") && is.vector(betas) &&
       (!all(names(betas) %in% colnames(x))))
         stop("The named elements in 'betas' should correspond to named ",
              "columns in the data frame specified in 'x'.")
@@ -333,7 +364,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     N <- nrow(x) # number of individuals
     ids <- seq(N)
   }
-  if (is.null(hazard) && is.null(loghazard) && is.null(tde)) { # standard parametric
+  if (is.null(hazard) &&
+      is.null(loghazard) &&
+      is.null(cumhazard) &&
+      is.null(logcumhazard) &&
+      is.null(tde)) { # standard parametric distribution
     survival <- get_survival(dist = dist, lambdas = lambdas, gammas = gammas,
                              mixture = mixture, pmix = pmix)
     tt <- sapply(ids, function(i) {
@@ -359,7 +394,10 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       }
       return(t_i)
     })
-  } else if (is.null(hazard) && is.null(loghazard)) { # # standard parametric with tde
+  } else if (is.null(hazard) &&
+             is.null(loghazard) &&
+             is.null(cumhazard) &&
+             is.null(logcumhazard)) { # # standard parametric with tde
     if (is.null(tdefunction)) {
       tdefunction <- function(x) x # just returns input value (ie. time)
     } else if (!is.null(tdefunction)) {
@@ -392,6 +430,38 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
           u = u_i, qq = qq, tde = tde, tdefunction = tdefunction,
           interval = interval)$root
+      }
+      return(t_i)
+    })
+  } else if (!is.null(cumhazard) ||
+             !is.null(logcumhazard)) { # user-defined cum hazard or log cum hazard
+    if (!is.null(tde))
+      stop("'tde' cannot be specified with a user-defined [log] cumulative hazard ",
+           "function; please just incorporate the time dependent effects ",
+           "into the [log] cumulative hazard function you are defining.")
+    if (!is.null(logcumhazard)) {
+      cumhazard <- function(t, x, betas, ...) exp(logcumhazard(t, x, betas, ...))
+    }
+    tt <- sapply(ids, function(i) {
+      x_i <- subset_df(x, i, idvar = idvar)
+      betas_i <- subset_df(betas, i, idvar = idvar)
+      u_i <- stats::runif(1)
+      # check whether S(t) is still greater than random uniform variable u_i at the
+      # upper limit of uniroot's interval (otherwise uniroot will return an error)
+      at_limit <- rootfn_cumhazard(interval[2], cumhazard = cumhazard, x = x_i,
+                                   betas = betas_i, u = u_i, ...)
+      if (is.nan(at_limit)) {
+        STOP_nan_at_limit()
+      } else if (at_limit > 0) {
+        if (is.null(maxt)) { # no censoring time
+          STOP_increase_limit()
+        } else { # individual will be censored anyway, so just return interval[2]
+          return(interval[2])
+        }
+      } else {
+        t_i <- stats::uniroot(
+          rootfn_cumhazard, cumhazard = cumhazard, x = x_i, betas = betas_i,
+          u = u_i, ..., interval = interval)$root
       }
       return(t_i)
     })
@@ -656,6 +726,24 @@ rootfn_hazard <- function(t, hazard, x = NULL, betas = NULL,
   cumhaz <- sum(unlist(lapply(1:length(qpts), function(q) {
     qwts[[q]] * hazard(t = qpts[[q]], x = x, betas = betas, ...)
   })))
+  surv <- exp(-cumhaz)
+  return(surv - u)
+}
+
+# Function for calculating the survival probability at time t minus a
+# random uniform.
+# Setting the returned value of this function to zero, and solving for t,
+# should provide the simulated survival time for one individual.
+#
+# @param t The event time, unknown but solution to be found using \code{uniroot}
+# @param cumhazard The user-defined cumulative hazard function, with named
+#   arguments x, betas, aux
+# @param x Vector of covariate data to be supplied to survival.
+# @param betas Vector of parameter values to be supplied to survival.
+# @param ... Further arguments passed to survival.
+rootfn_cumhazard <- function(t, cumhazard, x = NULL, betas = NULL,
+                             u = stats::runif(1), ...) {
+  cumhaz <- cumhazard(t = t, x = x, betas = betas, ...)
   surv <- exp(-cumhaz)
   return(surv - u)
 }

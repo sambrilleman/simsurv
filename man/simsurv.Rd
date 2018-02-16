@@ -6,8 +6,9 @@
 \usage{
 simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas, x,
   betas, tde, tdefunction = NULL, mixture = FALSE, pmix = 0.5, hazard,
-  loghazard, idvar = NULL, ids = NULL, nodes = 15, maxt = NULL,
-  interval = c(1e-08, 500), seed = sample.int(.Machine$integer.max, 1), ...)
+  loghazard, cumhazard, logcumhazard, idvar = NULL, ids = NULL,
+  nodes = 15, maxt = NULL, interval = c(1e-08, 500),
+  seed = sample.int(.Machine$integer.max, 1), ...)
 }
 \arguments{
 \item{dist}{Character string specifying the parametric survival distribution.
@@ -85,6 +86,16 @@ and parameters supplied via \code{betas}. See the \strong{Examples}.}
 log hazard at time \code{t} for an individual with covariates supplied via
 \code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.}
 
+\item{cumhazard}{Optionally, a user-defined cumulative hazard function, with
+arguments \code{t}, \code{x}, and \code{betas}. This function should return the
+cumulative hazard at time \code{t} for an individual with covariates supplied
+via \code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.}
+
+\item{logcumhazard}{Optionally, a user-defined log cumulative hazard function, with
+arguments \code{t}, \code{x}, and \code{betas}. This function should return the
+log cumulative hazard at time \code{t} for an individual with covariates supplied
+via \code{x} and parameters supplied via \code{betas}. See the \strong{Examples}.}
+
 \item{idvar}{The name of the ID variable identifying individuals. This is
 only required when \code{x} (and \code{betas} if it is supplied as a
 data frame) contains multiple rows per individual. Otherwise, if
@@ -106,7 +117,7 @@ will be truncated at \code{maxt} and the event indicator (\code{"status"})
 will be set to zero indicating that the individual was right-censored.}
 
 \item{interval}{The interval over which to search for the
-\code{\link[stats]{uniroot}} corresponding to each simulated event time.}
+\code{\link{uniroot}} corresponding to each simulated event time.}
 
 \item{seed}{The \code{\link[=set.seed]{seed}} to use.}
 
@@ -157,7 +168,7 @@ generated using the approach described in Crowther and Lambert (2013),
 whereby the cumulative hazard is evaluated using numerical quadrature and
 survival times are generated using an iterative algorithm which nests the
 quadrature-based evaluation of the cumulative hazard inside Brent's (1973)
-univariate root finder (for the latter the \code{\link[stats]{uniroot}}
+univariate root finder (for the latter the \code{\link{uniroot}}
 function is used). Not requiring a closed form solution to the cumulative
 hazard function has the benefit that survival times can be generated for
 complex models such as joint longitudinal and survival models; the
@@ -172,13 +183,13 @@ functions used by \code{simsurv} are:
 \eqn{S(t) = exp(-lambda * t ^ {gamma})}.
 
 Note that this parameterisation differs from the one used by
-\code{\link[stats]{dweibull}} or the \code{\link[eha]{phreg}} modelling
+\code{\link{dweibull}} or the \code{\link[eha]{phreg}} modelling
 function in the \pkg{eha} package. The parameterisation used in those
 functions can be achieved by transforming the scale parameter via the
 relationship \eqn{b = lambda ^ {-1 / gamma}}, or equivalently
 \eqn{lambda = b ^ {-gamma}} where \eqn{b} is the scale parameter under
 the parameterisation of the Weibull distribution used by
-\code{\link[stats]{dweibull}} or \code{\link[eha]{phreg}}.
+\code{\link{dweibull}} or \code{\link[eha]{phreg}}.
 }
 }
 \note{
