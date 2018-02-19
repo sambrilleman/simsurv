@@ -1,0 +1,221 @@
+---
+title: "How to use the simsurv package"
+author: "Sam Brilleman"
+date: "`r Sys.Date()`"
+output: 
+  html_vignette:
+    toc: yes
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{How to use the simsurv package}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.width = 7.5, 
+                      fig.height = 5)
+
+# Load packages
+library(simsurv)
+library(flexsurv)
+```
+
+This vignette provides examples demonstrating **How to use to the simsurv package**. For a technical vignette related to the methods underpinning the package, please see [Technical background to the simsurv package](simsurv_technical.html). 
+
+Note that several of the following examples are loosely based on Crowther and Lambert (2012) [1], which is the supporting paper for the **survsim** Stata package. 
+
+## Example 1: Simulating under a standard parametric survival model
+
+This first example shows how the **simsurv** package can be used to generate event times under a relatively standard Weibull proportional hazards model. This will be demonstrated as part of a simple simulation study. 
+
+The simulated event times will be generated under the following conditions: 
+
+* a monotonically increasing baseline hazard function, achieved by specifying a Weibull baseline hazard with a $\gamma$ parameter of 1.5; 
+* the effect of a protective treatment obtained by specifying a binary covariate with log hazard ratio of -0.5; 
+* a maximum follow up time by censoring any individuals with a simulated survival time larger than five years. 
+
+The objective of the simulation study will be to assess the bias and coverage of the estimated treatment effect. This will be achieved by: 
+
+* generating 500 simulated datasets, each containing $N = 200$ individuals; 
+* fitting a Weibull proportional hazards model to each simulated dataset using the **flexsurv** package; 
+* calculating mean bias and mean coverage (of the estimated treatment effect) across the 500 simulated datasets. 
+
+The code for performing the simulation study and the results are shown below.
+
+```{r, example1}
+# Define a function for analysing one simulated dataset
+sim_run <- function() {
+  # Create a data frame with the subject IDs and treatment covariate
+  cov <- data.frame(id = 1:200,
+                    trt = rbinom(200, 1, 0.5))
+  
+  # Simulate the event times
+  dat <- simsurv(lambdas = 0.1, 
+                 gammas = 1.5, 
+                 betas = c(trt = -0.5), 
+                 x = cov, 
+                 maxt = 5)
+  
+  # Merge the simulated event times onto covariate data frame
+  dat <- merge(cov, dat)
+  
+  # Fit a Weibull proportional hazards model
+  mod <- flexsurvspline(Surv(eventtime, status) ~ trt, data = dat)
+  
+  # Obtain estimates, standard errors and 95% CI limits
+  est <- mod$coefficients[["trt"]]
+  ses <- sqrt(diag(mod$cov))[["trt"]]
+  cil <- est + qnorm(.025) * ses
+  ciu <- est + qnorm(.975) * ses
+  
+  # Return bias and coverage indicator for treatment effect
+  c(bias = est - (-0.5), 
+    coverage = ((-0.5 > cil) && (-0.5 < ciu)))
+}
+
+# Set seed for simulations
+set.seed(908070)
+
+# Perform 500 replicates in simulation study
+rowMeans(replicate(500, sim_run()))
+```
+
+Here we see that there is very little bias in the estimates of the log hazard ratio for the treatment effect, and the 95% confidence intervals are near their intended level of coverage.
+
+## Example 2: Simulating under a flexible parametric survival model
+
+Next, we will simulate event times under a slightly more complex parametric survival model that incorporates a flexible baseline hazard.
+
+In this example we will use the publically accessible German breast cancer dataset. This dataset is included with the **simsurv** R package. Let us look at the first few rows of the dataset:
+
+```{r, brcancer_data}
+data("brcancer")
+head(brcancer)
+```
+
+Now let us fit two parametric survival models to the breast cancer data:
+
+* one Weibull survival model; and 
+* one flexible parametric survival model
+
+The flexible parametric survival model will be based on the method of Royston and Parmar (2002) [2]; i.e. restricted cubic splines are used to approximate the log cumulative baseline hazard. This model can be estimated using the `flexsurvspline` function from the **flexsurv** R package [3]. 
+
+We will use three internal knots for the restricted cubic splines with the knot points placed at evenly spaced percentiles of the distribution of observed event time (obtained by specifying the argument `k = 3` in the code below). We can also estimate the Weibull proportional hazards model using the `flexsurvspline` function from the **flexsurv** package, by specifying no internal knots (i.e. specifying `k = 0`).
+
+```{r, brcancer_models}
+# Fit the Weibull survival model
+mod_weib <- flexsurvspline(Surv(rectime, censrec) ~ hormon, 
+                           data = brcancer,
+                           k = 0)
+
+# Fit the flexible parametric survival model
+mod_flex <- flexsurvspline(Surv(rectime, censrec) ~ hormon, 
+                           data = brcancer, 
+                           k = 3)
+```
+
+
+Now let us compare the fit of the two models by plotting each of the fitted survival functions on top of the Kaplan-Meier survival curve.
+
+```{r, brcancer_plots}
+par(mfrow = c(1,2), cex = 0.85) # graphics parameters
+plot(mod_weib,
+     main = "Weibull model",
+     ylab = "Survival probability",
+     xlab = "Time") 
+plot(mod_flex,
+     main = "Flexible parametric model",
+     ylab = "Survival probability",
+     xlab = "Time")
+```
+
+There is evidence in the plots that the flexible parametric model fits the data better than the standard Weibull model. Therefore, if we wanted to simulate event times from a data generating process similar to that of the breast cancer data, then using a Weibull distribution may not be adequate. Rather, it would be more appropriate to simulate event times under the flexible parametric model. We will demonstrate how the **simsurv** package can be used to do this. The estimated parameters from the flexible parametric model will be used as the "true" parameters for the simulated event times.
+
+The event times can be generated under a user-specified log cumulative hazard function that is equivalent to the Royston and Parmar specification used by the **flexsurv** package. First, the log cumulative hazard function for this model needs to be defined as a function in the R session. The **user-defined function passed to `simsurv` must always have the following three arguments:** 
+
+* `t`: scalar specifying the current time at which to evaluate the hazard 
+* `x`: a named list with the covariate data
+* `betas`: a named list with the "true" parameters
+
+Each of these arguments provide information that is used in evaluating the hazard $h_i(t)$, log hazard $\log h_i(t)$, cumulative hazard $H_i(t)$, or log cumulative hazard $\log H_i(t)$ (depending on which type of user-specified function is being provided). These three arguments (`t`, `x`, `betas`) can then be followed in the function signature by any additional arguments that may be necessary. For example, in the function definition below, the first three arguments are followed by an additional argument `knots`, which allows the calculation of the log cumulative hazard at time $t$ to depend on the knot locations for the splines.
+
+```{r, define_logcumhaz}
+# Define a function returning the log cum hazard at time t
+logcumhaz <- function(t, x, betas, knots) {
+  
+  # Obtain the basis terms for the spline-based log
+  # cumulative hazard (evaluated at time t)
+  basis <- flexsurv::basis(knots, log(t))
+  
+  # Evaluate the log cumulative hazard under the
+  # Royston and Parmar specification
+  res <- 
+    betas[["gamma0"]] * basis[[1]] + 
+    betas[["gamma1"]] * basis[[2]] +
+    betas[["gamma2"]] * basis[[3]] +
+    betas[["gamma3"]] * basis[[4]] +
+    betas[["gamma4"]] * basis[[5]] +
+    betas[["hormon"]] * x[["hormon"]]
+  
+  # Return the log cumulative hazard at time t
+  res
+}
+```
+
+Next, we will show how to use the `simsurv` function to simulate event times under the flexible parametric model. To demonstrate this, we will again generate the event times as part of a simulation study. The objective of the simulation study will be to assess the bias and coverage of the estimated log hazard ratio for hormone therapy. This will be achieved by: 
+
+* generating 500 simulated datasets, each containing $N = 200$ individuals. The simulated event times will be generated under our flexible parametric model (with the "true" parameter values taken from fitting a model to the German breast cancer data);
+* fitting both a Weibull model and a flexible parameteric model to each simulated dataset; 
+* calculating the mean bias (across the 500 simulated datasets) in the log hazard ratio for hormone therapy under the Weibull model and the flexible parametric models. 
+
+```{r, example2}
+# Fit the model to the brcancer dataset to obtain the "true"
+# parameter values that will be used in our simulation study
+true_mod <- flexsurvspline(Surv(rectime, censrec) ~ hormon, data = brcancer, k = 3)
+
+# Define a function to generate one simulated dataset, fit
+# our two models (Weibull and flexible) to the simulated data
+# and then return the bias in the estimated effect of hormone
+# therapy under each fitted model
+sim_run <- function(true_mod) {
+  # Create a data frame with the subject IDs and treatment covariate
+  cov <- data.frame(id = 1:200, hormon = rbinom(200, 1, 0.5))
+
+  # Simulate the event times
+  dat <- simsurv(betas = true_mod$coefficients, # "true" parameter values
+                 x = cov,                   # covariate data for 200 individuals
+                 knots = true_mod$knots,    # knot locations for splines
+                 logcumhazard = logcumhaz,  # definition of log cum hazard
+                 maxt = NULL,               # no right-censoring
+                 interval = c(1E-8,100000)) # interval for root finding
+  
+  # Merge the simulated event times onto covariate data frame
+  dat <- merge(cov, dat)
+
+  # Fit a Weibull proportional hazards model
+  weib_mod <- flexsurvspline(Surv(eventtime, status) ~ hormon, data = dat, k = 0)
+  flex_mod <- flexsurvspline(Surv(eventtime, status) ~ hormon, data = dat, k = 3)
+  
+  # Obtain estimates, standard errors and 95% CI limits for hormone effect
+  true_loghr <- true_mod$coefficients[["hormon"]]
+  weib_loghr <- weib_mod$coefficients[["hormon"]]
+  flex_loghr <- flex_mod$coefficients[["hormon"]]
+ 
+  # Return bias and coverage indicator for hormone effect
+  c(weib_bias = weib_loghr - true_loghr, 
+    flex_bias = flex_loghr - true_loghr)
+}
+
+# Set a seed for the simulations
+set.seed(543543)
+
+# Perform the simulation study using 500 replicates
+rowMeans(replicate(500, sim_run(true_mod = true_mod)))
+```
+
+## References
+
+1. Crowther MJ, Lambert PC. Simulating complex survival data. *Stata J* 2012;**12**(4):674-687.
+2. Royston P, Parmar MK. Flexible parametric proportional-hazards and proportional-odds models for censored survival data, with application to prognostic modelling and estimation of treatment effects. *Stat Med* 2002;**21**(15):2175-2197. \doi:10.1002/sim.1203
+3. Jackson C. flexsurv: A platform for parametric survival modeling in R. *Journal of Statistical  Software* 2016;**70**(8):1-33. \doi:10.18637/jss.v070.i08
