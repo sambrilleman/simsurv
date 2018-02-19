@@ -214,6 +214,9 @@ set.seed(543543)
 rowMeans(replicate(500, sim_run(true_mod = true_mod)))
 ```
 
+## Example 3: Gompertz survival model with time-dependent effects
+
+
 ## References
 
 1. Crowther MJ, Lambert PC. Simulating complex survival data. *Stata J* 2012;**12**(4):674-687.
