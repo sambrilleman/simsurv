@@ -21,14 +21,7 @@ To simulate survival data, a common approach has been to make simplifying parame
 
 A more general method was proposed by Bender et al. (2005) [1] and is referred to herein as the cumulative hazard inversion method. This method allows one to simulate event times under a proportional hazards model data generating process for any parametric baseline hazard function. This includes as special cases the exponential, Weibull and Gompertz distributions. However, it also provides a much more general framework that can be extended beyond those standard parametric distributions.
 
-Using the cumulative hazard inversion method one can easily simulate a survival time $T_i^s$ for individual $i$ by drawing a uniform random variable $U_i \sim U(0,1)$ and evaluating
 
-\begin{equation}
-  T_i^s = H_0^{-1} \left[ -\log(U_i) \exp(X_i^T \beta) \right]
-\label{eq:bender_formula}
-\end{equation}
-
-where $H_0^{-1} [.]$ corresponds to the inverted cumulative baseline hazard, and $X_i$ is a vector of covariates with associated population-level (i.e. fixed effect) parameters $\beta$. Therefore, all that is required to generate the simulated event time is an independent draw of the random uniform variable $U_i$ and an invertible cumulative baseline hazard function. If an analytical solution to the inverse of the cumulative baseline hazard can be obtained, then the method is both simple and computationally efficient. The intuition behind this method is described next.
 
 ## Simulating survival probabilities for known parametric distributions
 
@@ -61,7 +54,79 @@ It is then possible to extend these results to the setting of a proportional haz
   S_i (T_i^*) = \exp \left( -H_0 (T_i^*) \exp(X_i^T \beta) \right) = U_i \sim U(0,1)
 \end{align}
 
-where $H_0(t)=\int_0^t h_0(s) ds$ is the cumulative baseline hazard evaluated at time $t$. Since the objective is to simulate new event times $T_i^s$ $(i=1,…,N)$ one needs to rearrange equation $X$ to solve for the event time; the equation resulting from the rearrangement was shown previously in equation $\ref{eq:bender_formula}$.
+where $H_0(t)=\int_0^t h_0(s) ds$ is the cumulative baseline hazard evaluated at time $t$. Since the objective is to simulate new event times $T_i^s$ $(i=1,…,N)$ one needs to rearrange equation $X$ to solve for the event time. The equation resulting from this rearrangement is described in the next section.
+
+## Cumulative hazard inversion method
+
+Using the cumulative hazard inversion method one can easily simulate a survival time  by drawing a uniform random variable $U_i \sim U(0,1)$ and evaluating
+
+Rearranging the equation from the previous section to solve for $T_i$ leads the following general form:
+
+\begin{equation}
+  T_i^s = H_0^{-1} \left[ -\log(U_i) \exp(X_i^T \beta) \right]
+\label{eq:bender_formula}
+\end{equation}
+
+where $T_i^s$ is the simulated event time for individual $i$, $H_0^{-1} [.]$ corresponds to the inverted cumulative baseline hazard, $X_i$ is a vector of covariates with associated population-level (i.e. fixed effect) parameters $\beta$, and $U_i$ is a random variable drawn from a $U(0,1)$ distribution.
+
+Therefore, all that is required to generate the simulated event time is an independent draw of the random uniform variable $U_i$ and an invertible cumulative baseline hazard function. If the cumulative baseline hazard is invertible then an analytical for will be available for this equation. In particular we can show the analytical form for the Weibull, exponential and Gompertz distributions under the parameterisations used in **simsurv**.
+
+### Weibull distribution
+
+For the Weibull distribution we have the following:
+
+$$
+  h_i(t) = \gamma \lambda (t ^{\gamma - 1}) \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = \lambda (t^{\gamma}) \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = \exp \left( \frac{-\lambda (t^{\gamma})}{\exp(X_i^T \beta)} \right)
+$$
+
+$$
+  T_i^s = \left( 
+    - (\lambda^{-1}) \log(U_i) \exp(X_i^T \beta)
+  \right) 
+  ^ {\frac{1}{\gamma}}
+$$
+
+### Exponential distribution
+
+For the exponential distribution we have the following:
+
+$$
+  h_i(t) = \lambda \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = \lambda t \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = \exp \left( -\lambda t \exp(X_i^T \beta) \right)
+$$
+
+$$
+  T_i^s = \left( 
+    \frac{- \log(U_i)}{\lambda \exp(X_i^T \beta)}
+  \right)
+$$
+
+### Gompertz distribution
+
+solution to the inverse of the cumulative baseline hazard can be obtained, then the method is both simple and computationally efficient. The intuition behind this method is described next.
+
+the general equation resulting from the rearrangement was shown previously in equation $\ref{eq:bender_formula}$. 
+
+
+
+If the cumulative baseline hazard is invertible, then we can find an analytic form for the equation in However, we can also show the rearrangment specifically for each of the standard p
+
+The specific inverted c
 
 ## Extending to complex data generating processes
 

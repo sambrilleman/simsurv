@@ -368,32 +368,44 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       is.null(loghazard) &&
       is.null(cumhazard) &&
       is.null(logcumhazard) &&
-      is.null(tde)) { # standard parametric distribution
-    survival <- get_survival(dist = dist, lambdas = lambdas, gammas = gammas,
-                             mixture = mixture, pmix = pmix)
-    tt <- sapply(ids, function(i) {
-      x_i <- subset_df(x, i, idvar = idvar)
-      betas_i <- subset_df(betas, i, idvar = idvar)
-      u_i <- stats::runif(1)
-      # check whether S(t) is still greater than random uniform variable u_i at the
-      # upper limit of uniroot's interval (otherwise uniroot will return an error)
-      at_limit <- rootfn_surv(interval[2], survival = survival, x = x_i,
-                              betas = betas_i, u = u_i, ...)
-      if (is.nan(at_limit)) {
-        STOP_nan_at_limit()
-      } else if (at_limit > 0) {
-        if (is.null(maxt)) { # no censoring time
-          STOP_increase_limit()
-        } else { # individual will be censored anyway, so just return interval[2]
-          return(interval[2])
+      is.null(tde)) { # standard parametric or mixture distribution
+    if (!mixture) { # non-mixture dist; use analytic form for inverted survival
+      inverted_surv <- get_inverted_surv(dist = dist,
+                                         lambdas = lambdas, gammas = gammas)
+      tt <- sapply(ids, function(i) {
+        x_i <- subset_df(x, i, idvar = idvar)
+        betas_i <- subset_df(betas, i, idvar = idvar)
+        u_i <- stats::runif(1)
+        t_i <- inverted_surv(u = u_i, x = x_i, betas = betas_i)
+        return(t_i)
+      })
+    } else { # mixture dist; use root finding to invert survival
+      survival <- get_survival(dist = dist, lambdas = lambdas, gammas = gammas,
+                               mixture = mixture, pmix = pmix)
+      tt <- sapply(ids, function(i) {
+        x_i <- subset_df(x, i, idvar = idvar)
+        betas_i <- subset_df(betas, i, idvar = idvar)
+        u_i <- stats::runif(1)
+        # check whether S(t) is still greater than random uniform variable u_i at the
+        # upper limit of uniroot's interval (otherwise uniroot will return an error)
+        at_limit <- rootfn_surv(interval[2], survival = survival, x = x_i,
+                                betas = betas_i, u = u_i, ...)
+        if (is.nan(at_limit)) {
+          STOP_nan_at_limit()
+        } else if (at_limit > 0) {
+          if (is.null(maxt)) { # no censoring time
+            STOP_increase_limit()
+          } else { # individual will be censored anyway, so just return interval[2]
+            return(interval[2])
+          }
+        } else {
+          t_i <- stats::uniroot(
+            rootfn_surv, survival = survival, x = x_i, betas = betas_i,
+            u = u_i, ..., interval = interval)$root
         }
-      } else {
-        t_i <- stats::uniroot(
-          rootfn_surv, survival = survival, x = x_i, betas = betas_i,
-          u = u_i, ..., interval = interval)$root
-      }
-      return(t_i)
-    })
+        return(t_i)
+      })
+    }
   } else if (is.null(hazard) &&
              is.null(loghazard) &&
              is.null(cumhazard) &&
@@ -516,6 +528,26 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
 
 
 #----------- internal
+
+# Return the inverted survival function, rearranged to solve for t
+#
+# @param dist The name of the distribution for the baseline hazard
+# @param lambdas The scale parameter(s) for the baseline hazard
+# @param gammas The shape parameter(s) for the baseline hazard
+get_inverted_surv <- function(dist = c("weibull", "exponential", "gompertz"),
+                              lambdas = NULL, gammas = NULL) {
+  validate_lambdas(lambdas = lambdas, dist = dist, mixture = FALSE)
+  validate_gammas(gammas = gammas, dist = dist, mixture = FALSE)
+  if (dist == "weibull") { # weibull inverted survival
+    inv_surv <- function(u, x, betas) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      t <- (-log(u) * exp(eta) / lambdas[1L]) ^ (1 / gammas[1L])
+      return(t)
+    }
+  }
+  return(inv_surv)
+}
 
 # Return the survival function for the specified distribution
 #
