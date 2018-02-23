@@ -15,9 +15,11 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introduction
+## Preamble
 
-This vignette herein describes the methodology used to simulate event times in the **simsurv** package.
+This vignette herein describes the methodology used to simulate event times in the **simsurv** package. For a vignette related to usage of the package, including examples and code, please see [How to use the simsurv package](simsurv_usage.html). 
+
+## Introduction
 
 The survival function for individual $i$ is the probability that their “true” event time $T_i^*$ is greater than the current time $t$. That is, the survival function can be defined as
 
@@ -149,7 +151,7 @@ where $\lambda > 0$ and $\gamma > 0$ are the shape and scale parameters, respect
 
 If the cumulative baseline hazard function is not invertible, then numerical root finding can be used to solve to $t$. This method has been discussed by both Bender et al. (2005) and Crowther and Lambert (2013). In **simsurv** this is required for the two-component mixture distributions (assuming proportional hazards). An analytical form is available for the survival function of each of these distributions, but numerical root finding must be used to invert the survival function. In practice, the **simsurv** package uses the `stats::uniroot` function based on the method of Brent (1973). This means iteratively finding a solution to the equation $S_i(t) - U_i = 0$.  
 
-The two-component mixture distributions in **simsurv** are parameterised in the same way as the **survsim** Stata package. That is, they are additive on the survival scale, with a parameter defining the mixing proportions, i.e.
+The two-component mixture distributions in **simsurv** are parameterised in the same way as the **survsim** Stata package (Crowther and Lambert (2002)). That is, they are additive on the survival scale, with a parameter defining the mixing proportions, i.e.
 
 $$
   S_0(t) = \pi S_{01}(t) + (1-\pi) S_{02}(t)
@@ -167,6 +169,14 @@ $$
     \frac
     {\pi \lambda_1 \exp(-\lambda_1 t) + (1 - \pi) \lambda_2 \exp(-\lambda_2 t) }
     {\pi \exp(-\lambda_1 t) + (1 - \pi) \exp(-\lambda_2 t) }
+  \right] 
+  \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = - \log
+  \left[ 
+    \pi \exp(-\lambda_1 t) + (1-\pi) \exp(-\lambda_2 t) 
   \right] 
   \exp(X_i^T \beta)
 $$
@@ -190,8 +200,16 @@ $$
   \left[
     \frac
     { \pi \gamma_1 \lambda_1 (t^{\gamma_1-1}) \exp(-\lambda_1 (t^{\gamma_1})) + 
-      (1-\pi) \gamma_1 \lambda_1 (t^{\gamma_1-1}) \exp(-\lambda_2 (t^{\gamma_2})) }
+      (1-\pi) \gamma_2 \lambda_2 (t^{\gamma_2-1}) \exp(-\lambda_2 (t^{\gamma_2})) }
     {\pi \exp(-\lambda_1 (t^{\gamma_1})) + (1-\pi) \exp(-\lambda_2 (t^{\gamma_2}))}
+  \right] 
+  \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = - \log
+  \left[
+    \pi \exp(-\lambda_1 (t^{\gamma_1})) + (1-\pi) \exp(-\lambda_2 (t^{\gamma_2})) 
   \right] 
   \exp(X_i^T \beta)
 $$
@@ -208,7 +226,32 @@ where $\lambda_1 > 0$ and $\lambda_2 > 0$ are the scale parameters, and $\gamma_
 
 ### Gompertz mixture distribution
 
-To be completed.
+$$
+  h_i(t) = 
+  \left[
+    \frac
+    {
+      \pi \lambda_1 \exp(\gamma_1 t) \exp \left( \frac{-\lambda_1 (\exp(\gamma_1 t) - 1)}{\gamma_1} \right)
+      + (1-\pi) \lambda_2 \exp(\gamma_2 t) \exp \left( \frac{-\lambda_2 (\exp(\gamma_2 t) - 1)}{\gamma_2} \right)
+    }
+    {
+      \pi \exp \left( \frac{-\lambda_1 (\exp(\gamma_1 t) - 1)}{\gamma_1} \right)
+      + (1-\pi) \exp \left( \frac{-\lambda_2 (\exp(\gamma_2 t) - 1)}{\gamma_2} \right)
+    }
+  \right]
+  \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = - \log
+  \left[
+    \pi 
+    \exp \left( \frac{-\lambda_1 (\exp(\gamma_1 t) - 1)}{\gamma_1} \right)
+    + (1-\pi) 
+    \exp \left( \frac{-\lambda_2 (\exp(\gamma_2 t) - 1)}{\gamma_2} \right)
+  \right] 
+  \exp(X_i^T \beta)
+$$
 
 $$
   S_i(t) = 
@@ -231,12 +274,12 @@ An example of a situation where their method is required is the introduction of 
 
 ## References
 
-Bender R, Augustin T, Blettner M. Generating survival times to simulate Cox proportional hazards models. *Stat Med* 2005;**24**(11):1713-1723. \doi:10.1002/sim.2059
+Bender R, Augustin T, Blettner M. Generating survival times to simulate Cox proportional hazards models. *Stat Med* 2005;**24**(11):1713-1723. \doi{10.1002/sim.2059}
 
 Brent R. *Algorithms for Minimization without Derivatives*. Englewood Cliffs, NJ: Prentice-Hall, 1973.
 
 Crowther MJ, Lambert PC. Simulating complex survival data. *Stata J* 2012;**12**(4):674-687.
 
-Crowther MJ, Lambert PC. Simulating biologically plausible complex survival data. *Stat Med* 2013;**32**(23):4118-4134. \doi:10.1002/sim.5823
+Crowther MJ, Lambert PC. Simulating biologically plausible complex survival data. *Stat Med* 2013;**32**(23):4118-4134. \doi{10.1002/sim.5823}
 
 Mood AM, Graybill FA, Boes DC. *Introduction to the Theory of Statistics*. McGraw-Hill: New York, 1974.

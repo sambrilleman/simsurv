@@ -21,11 +21,15 @@ library(simsurv)
 library(flexsurv)
 ```
 
-This vignette provides examples demonstrating **How to use to the simsurv package**. For a technical vignette related to the methods underpinning the package, please see [Technical background to the simsurv package](simsurv_technical.html). 
+## Preamble
 
-Note that several of the following examples are loosely based on Crowther and Lambert (2012) [1], which is the supporting paper for the **survsim** Stata package. 
+This vignette provides examples demonstrating usage of the **simsurv** package. For a technical vignette describing the methods underpinning the package, please see [Technical background to the simsurv package](simsurv_technical.html). 
 
-## Example 1: Simulating under a standard parametric survival model
+Note that this package is modelled on the **survsim** Stata package. For comparability, several of the following examples are based on Crowther and Lambert (2012), which is the supporting paper for the **survsim** Stata package. 
+
+## Usage examples
+
+### Example 1: Simulating under a standard parametric survival model
 
 This first example shows how the **simsurv** package can be used to generate event times under a relatively standard Weibull proportional hazards model. This will be demonstrated as part of a simple simulation study. 
 
@@ -83,7 +87,7 @@ rowMeans(replicate(500, sim_run()))
 
 Here we see that there is very little bias in the estimates of the log hazard ratio for the treatment effect, and the 95% confidence intervals are near their intended level of coverage.
 
-## Example 2: Simulating under a flexible parametric survival model
+### Example 2: Simulating under a flexible parametric survival model
 
 Next, we will simulate event times under a slightly more complex parametric survival model that incorporates a flexible baseline hazard.
 
@@ -99,7 +103,7 @@ Now let us fit two parametric survival models to the breast cancer data:
 * one Weibull survival model; and 
 * one flexible parametric survival model
 
-The flexible parametric survival model will be based on the method of Royston and Parmar (2002) [2]; i.e. restricted cubic splines are used to approximate the log cumulative baseline hazard. This model can be estimated using the `flexsurvspline` function from the **flexsurv** R package [3]. 
+The flexible parametric survival model will be based on the method of Royston and Parmar (2002); i.e. restricted cubic splines are used to approximate the log cumulative baseline hazard. This model can be estimated using the `flexsurvspline` function from the **flexsurv** R package (Jackson (2016)). 
 
 We will use three internal knots for the restricted cubic splines with the knot points placed at evenly spaced percentiles of the distribution of observed event time (obtained by specifying the argument `k = 3` in the code below). We can also estimate the Weibull proportional hazards model using the `flexsurvspline` function from the **flexsurv** package, by specifying no internal knots (i.e. specifying `k = 0`).
 
@@ -214,11 +218,126 @@ set.seed(543543)
 rowMeans(replicate(500, sim_run(true_mod = true_mod)))
 ```
 
-## Example 3: Gompertz survival model with time-dependent effects
+### Example 3: Simulating under a Gompertz survival model with time-dependent effects
 
+
+### Example 4: Simulating under a joint model for longitudinal and survival data
+
+This example shows how the **simsurv** package can be used to simulate event times under a shared parameter joint model for longitudinal and survival data. 
+
+We will simulate event times according to the following model formulation for the longitudinal submodel
+
+$$ Y_i(t) \sim N(\mu_i(t), \sigma_y^2) $$
+
+$$ \mu_i(t) = \beta_{0i} + \beta_{1i} t + \beta_2 x_{1i} + \beta_3 x_{2i} $$
+$$ \beta_{0i} = \beta_{00} + b_{0i} $$
+$$ \beta_{1i} = \beta_{10} + b_{1i} $$
+$$ (b_{0i}, b_{1i})^T \sim N(0, \Sigma) $$
+
+and the event submodel
+
+$$ 
+  h_i(t) = \delta (t^{\delta-1}) 
+    \exp (\gamma_0 + \gamma_1 x_{1i} + \gamma_2 x_{2i} + \alpha \mu_i(t)) 
+$$
+
+where $x_{1i}$ is an indicator variable for a binary covariate, $x_{2i}$ is a continuous covariate, $b_{0i}$ and $b_{1i}$ are individual-level parameters (i.e. random effects) for the intercept and slope for individual $i$, the $\beta$ and $\gamma$ terms are population-level parameters (i.e. fixed effects), and $\delta$ is the shape parameter for the Weibull baseline hazard. 
+
+This specification allows for an individual-specific linear trajectory for the longitudinal submodel, a Weibull baseline hazard in the event submodel, a current value association structure, and the effects of a binary and a continuous covariate in both the longitudinal and event submodels. 
+
+To simulate from this model using **simsurv**, we need to first explicitly define the hazard function. The code defining a function that returns the hazard for this joint model is
+
+```{r, jmexample_define_hazard}
+# First we define the hazard function to pass to simsurv
+# (NB this is a Weibull proportional hazards regression submodel
+# from a joint longitudinal and survival model with a "current
+# value" association structure)
+haz <- function(t, x, betas, ...) {
+  betas[["delta"]] * (t ^ (betas[["delta"]] - 1)) * exp(
+    betas[["gamma_0"]] +
+    betas[["gamma_1"]] * x[["x1"]] +
+    betas[["gamma_2"]] * x[["x2"]] +
+    betas[["alpha"]] * (
+      betas[["beta_0i"]] +
+      betas[["beta_1i"]] * t +
+      betas[["beta_2"]]  * x[["x1"]] +
+      betas[["beta_3"]]  * x[["x2"]]
+    )
+  )
+}
+```
+
+The next step is to define the “true” parameter values and covariate data for each individual. This is achieved by specifying two data frames: one for the parameter values, and one for the covariate data. Each row of the data frame will correspond to a different individual. The R code to achieve this is
+
+```{r, jmexample_pars_and_covs} 
+# Then we construct data frames with the true parameter
+# values and the covariate data for each individual
+set.seed(5454) # set seed before simulating data
+N <- 200       # number of individuals
+
+# Population (fixed effect) parameters
+betas <- data.frame(
+  delta   = rep(2,    N),
+  gamma_0 = rep(-11.9,N),
+  gamma_1 = rep(0.6,  N),
+  gamma_2 = rep(0.08, N),
+  alpha   = rep(0.03, N),
+  beta_0  = rep(90,   N),
+  beta_1  = rep(2.5,  N),
+  beta_2  = rep(-1.5, N),
+  beta_3  = rep(1,    N)
+)
+
+# Individual-specific (random effect) parameters
+b_corrmat <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
+b_sds     <- c(20, 3)
+b_means   <- rep(0, 2)
+b_z       <- MASS::mvrnorm(n = N, mu = b_means, Sigma = b_corrmat)
+b         <- sapply(1:length(b_sds), 
+                    FUN = function(x) b_sds[x] * b_z[,x])
+betas$beta_0i <- betas$beta_0 + b[,1]
+betas$beta_1i <- betas$beta_1 + b[,2]
+
+# Covariate data
+covdat <- data.frame(
+  x1 = stats::rbinom(N, 1, 0.45), # a binary covariate
+  x2 = stats::rnorm(N, 44, 8.5)   # a continuous covariate
+)
+```
+
+The final step is to then generate the simulated event times using a call to the `simsurv` function. The only arguments that need to be specified are the user-defined hazard function, the true parameter values, and the covariate data. In this example we will also specify a maximum follow up time of ten units (for example, ten years, after which individuals will be censored if they have not yet experienced the event). 
+
+The code to generate the simulated event times is 
+
+```{r, jmexample_sim}
+# Set seed for simulations
+set.seed(546546)
+
+# Then simulate the survival times based on the user-defined
+# hazard function, covariates data, and true parameter values
+times <- simsurv(hazard = haz, x = covdat, betas = betas, maxt = 10)
+```
+
+We can them examine the first few rows of the resulting data frame, to see the simulated event times and event indicator
+
+```{r, jmexample_view_data}
+head(times)
+## id eventtime status
+##  1  4.813339      1
+##  2  9.763900      1
+##  3  5.913436      1
+##  4  2.823562      1
+##  5  2.315488      1
+##  6 10.000000      0
+```
+
+Of course, we have only simulated the event times here; we haven't simulated any observed values for the longitudinal outcome. Moreover, although the **simsurv** package can be used for simulating joint longitudinal and time-to-event data, it did take a bit of work and several lines of code to achieve. Therefore, it is worth noting that the **simjm** package (https://github.com/sambrilleman/simjm), which acts as a wrapper for **simsurv**, is designed specifically for this purpose. It can make the process a lot easier, since it shields the user from much of the work described in this example. Instead, the user can simulate joint longitudinal and time-to-event data using one function call to `simjm::simjm` and a number of optional arguments are available to alter the exact specification of the shared parameter joint model.
 
 ## References
 
-1. Crowther MJ, Lambert PC. Simulating complex survival data. *Stata J* 2012;**12**(4):674-687.
-2. Royston P, Parmar MK. Flexible parametric proportional-hazards and proportional-odds models for censored survival data, with application to prognostic modelling and estimation of treatment effects. *Stat Med* 2002;**21**(15):2175-2197. \doi:10.1002/sim.1203
-3. Jackson C. flexsurv: A platform for parametric survival modeling in R. *Journal of Statistical  Software* 2016;**70**(8):1-33. \doi:10.18637/jss.v070.i08
+Crowther MJ, Lambert PC. Simulating complex survival data. *Stata J* 2012;**12**(4):674-687.
+
+Jackson C. flexsurv: A platform for parametric survival modeling in R. *Journal of Statistical  Software* 2016;**70**(8):1-33. \doi{10.18637/jss.v070.i08}
+
+Royston P, Parmar MK. Flexible parametric proportional-hazards and proportional-odds models for censored survival data, with application to prognostic modelling and estimation of treatment effects. *Stat Med* 2002;**21**(15):2175-2197. \doi{10.1002/sim.1203}
+
