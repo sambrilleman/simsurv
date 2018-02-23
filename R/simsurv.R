@@ -545,6 +545,20 @@ get_inverted_surv <- function(dist = c("weibull", "exponential", "gompertz"),
       t <- (-log(u) * exp(eta) / lambdas[1L]) ^ (1 / gammas[1L])
       return(t)
     }
+  } else if (dist == "exponential") { # exponential inverted survival
+    inv_surv <- function(u, x, betas) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      t <- (-log(u) * exp(eta) / lambdas[1L])
+      return(t)
+    }
+  } else if (dist == "gompertz") { # gompertz inverted survival
+    inv_surv <- function(u, x, betas) {
+      eta <- if (!is.null(betas))
+        sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
+      t <- (1 / gammas[1L]) * log(((-gammas[1L]*log(u)) / (gammas[1L]*exp(eta))) + 1)
+      return(t)
+    }
   }
   return(inv_surv)
 }
