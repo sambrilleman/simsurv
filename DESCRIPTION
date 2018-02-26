@@ -22,7 +22,7 @@ Description: Simulate survival times from standard parametric survival
     Crowther and Lambert (2013) <doi:10.1002/sim.5823>).
 License: GPL (>=3) | file LICENSE
 Depends:
-    R (>= 3.3.2)
+    R (>= 3.3.0)
 Imports:
     methods,
     stats
