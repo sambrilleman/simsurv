@@ -41,9 +41,9 @@ The simulated event times will be generated under the following conditions:
 
 The objective of the simulation study will be to assess the bias and coverage of the estimated treatment effect. This will be achieved by: 
 
-* generating 500 simulated datasets, each containing $N = 200$ individuals; 
+* generating 100 simulated datasets (ideally it should be more than 100 datasets, but we don't want the vignette to take forever to build!), each containing $N = 200$ individuals; 
 * fitting a Weibull proportional hazards model to each simulated dataset using the **flexsurv** package; 
-* calculating mean bias and mean coverage (of the estimated treatment effect) across the 500 simulated datasets. 
+* calculating mean bias and mean coverage (of the estimated treatment effect) across the 100 simulated datasets. 
 
 The code for performing the simulation study and the results are shown below.
 
@@ -81,8 +81,8 @@ sim_run <- function() {
 # Set seed for simulations
 set.seed(908070)
 
-# Perform 500 replicates in simulation study
-rowMeans(replicate(500, sim_run()))
+# Perform 100 replicates in simulation study
+rowMeans(replicate(100, sim_run()))
 ```
 
 Here we see that there is very little bias in the estimates of the log hazard ratio for the treatment effect, and the 95% confidence intervals are near their intended level of coverage.
@@ -91,7 +91,7 @@ Here we see that there is very little bias in the estimates of the log hazard ra
 
 Next, we will simulate event times under a slightly more complex parametric survival model that incorporates a flexible baseline hazard.
 
-In this example we will use the publically accessible German breast cancer dataset. This dataset is included with the **simsurv** R package. Let us look at the first few rows of the dataset:
+In this example we will use the publically accessible German breast cancer dataset. This dataset is included with the **simsurv** R package (see `help(simsurv::brcancer)` for a description of the dataset). Let us look at the first few rows of the dataset:
 
 ```{r, brcancer_data}
 data("brcancer")
@@ -169,9 +169,9 @@ logcumhaz <- function(t, x, betas, knots) {
 
 Next, we will show how to use the `simsurv` function to simulate event times under the flexible parametric model. To demonstrate this, we will again generate the event times as part of a simulation study. The objective of the simulation study will be to assess the bias and coverage of the estimated log hazard ratio for hormone therapy. This will be achieved by: 
 
-* generating 500 simulated datasets, each containing $N = 200$ individuals. The simulated event times will be generated under our flexible parametric model (with the "true" parameter values taken from fitting a model to the German breast cancer data);
+* generating 100 simulated datasets (ideally it should be more than 100 datasets, but we don't want the vignette to take forever to build!), each containing $N = 200$ individuals. The simulated event times will be generated under our flexible parametric model (with the "true" parameter values taken from fitting a model to the German breast cancer data);
 * fitting both a Weibull model and a flexible parameteric model to each simulated dataset; 
-* calculating the mean bias (across the 500 simulated datasets) in the log hazard ratio for hormone therapy under the Weibull model and the flexible parametric models. 
+* calculating the mean bias (across the 100 simulated datasets) in the log hazard ratio for hormone therapy under the Weibull model and the flexible parametric models. 
 
 ```{r, example2}
 # Fit the model to the brcancer dataset to obtain the "true"
@@ -214,14 +214,11 @@ sim_run <- function(true_mod) {
 # Set a seed for the simulations
 set.seed(543543)
 
-# Perform the simulation study using 500 replicates
-rowMeans(replicate(500, sim_run(true_mod = true_mod)))
+# Perform the simulation study using 100 replicates
+rowMeans(replicate(100, sim_run(true_mod = true_mod)))
 ```
 
-### Example 3: Simulating under a Gompertz survival model with time-dependent effects
-
-
-### Example 4: Simulating under a joint model for longitudinal and survival data
+### Example 3: Simulating under a joint model for longitudinal and survival data
 
 This example shows how the **simsurv** package can be used to simulate event times under a shared parameter joint model for longitudinal and survival data. 
 
