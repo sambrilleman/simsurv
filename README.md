@@ -26,7 +26,6 @@ You can install the **simsurv** package directly from CRAN. Just type the follow
 
 ``` r
 install.packages("simsurv")
-}
 ```
 
 ### Installation: development version
@@ -56,17 +55,18 @@ Please also see the package vignettes for more detailed examples and a descripti
 Generate times from a Weibull model including a binary treatment variable, with log hazard ratio of -0.5, and censoring after 5 years:
 
 ``` r
+set.seed(13579)
 covs <- data.frame(id = 1:1000, trt = stats::rbinom(1000, 1L, 0.5))
 s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
               x = covs, betas = c(trt = -0.5), maxt = 5)
 head(s1)
 #>   id eventtime status
-#> 1  1 4.0868931      1
-#> 2  2 0.7682944      1
-#> 3  3 3.2643156      1
-#> 4  4 5.0000000      0
-#> 5  5 2.6244438      1
-#> 6  6 5.0000000      0
+#> 1  1  5.000000      0
+#> 2  2  1.538271      1
+#> 3  3  0.962767      1
+#> 4  4  2.840668      1
+#> 5  5  5.000000      0
+#> 6  6  1.141409      1
 ```
 
 Generate times from a Gompertz model:

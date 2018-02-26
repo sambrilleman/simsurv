@@ -71,7 +71,6 @@ following into your R session console:
 
 ```r
 install.packages("simsurv")
-}
 ```
 ### Installation: development version
 
@@ -103,6 +102,7 @@ description of the methodology underpinning the **simsurv** package.
 Generate times from a Weibull model including a binary treatment variable, with log hazard ratio of -0.5, and censoring after 5 years:
 
 ```{r example1}  
+set.seed(13579)
 covs <- data.frame(id = 1:1000, trt = stats::rbinom(1000, 1L, 0.5))
 s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
               x = covs, betas = c(trt = -0.5), maxt = 5)
