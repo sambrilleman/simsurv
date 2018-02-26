@@ -19,6 +19,7 @@ knitr::opts_chunk$set(echo = TRUE,
 # Load packages
 library(simsurv)
 library(flexsurv)
+library(rstpm2)
 ```
 
 ## Preamble
@@ -65,7 +66,7 @@ sim_run <- function() {
   dat <- merge(cov, dat)
   
   # Fit a Weibull proportional hazards model
-  mod <- flexsurvspline(Surv(eventtime, status) ~ trt, data = dat)
+  mod <- flexsurv::flexsurvspline(Surv(eventtime, status) ~ trt, data = dat)
   
   # Obtain estimates, standard errors and 95% CI limits
   est <- mod$coefficients[["trt"]]
@@ -103,22 +104,19 @@ Now let us fit two parametric survival models to the breast cancer data:
 * one Weibull survival model; and 
 * one flexible parametric survival model
 
-The flexible parametric survival model will be based on the method of Royston and Parmar (2002); i.e. restricted cubic splines are used to approximate the log cumulative baseline hazard. This model can be estimated using the `flexsurvspline` function from the **flexsurv** R package (Jackson (2016)). 
+The flexible parametric survival model will be based on the method of Royston and Parmar (2002); i.e. restricted cubic splines are used to approximate the log cumulative baseline hazard. This model can be estimated using the `flexsurvspline` function from the **flexsurv** package (Jackson (2016)). 
 
-We will use three internal knots for the restricted cubic splines with the knot points placed at evenly spaced percentiles of the distribution of observed event time (obtained by specifying the argument `k = 3` in the code below). We can also estimate the Weibull proportional hazards model using the `flexsurvspline` function from the **flexsurv** package, by specifying no internal knots (i.e. specifying `k = 0`).
+We will use three internal knots (i.e. four degrees of freedom) for the restricted cubic splines with the knot points placed at evenly spaced percentiles of the distribution of observed event time (obtained by specifying the argument `k = 3` in the code below). We can also estimate the Weibull proportional hazards model using the `flexsurvspline` function from the **flexsurv** package, by specifying no internal knots (i.e. specifying `k = 0`).
 
 ```{r, brcancer_models}
 # Fit the Weibull survival model
-mod_weib <- flexsurvspline(Surv(rectime, censrec) ~ hormon, 
-                           data = brcancer,
-                           k = 0)
+mod_weib <- flexsurv::flexsurvspline(Surv(rectime, censrec) ~ hormon, 
+                                     data = brcancer, k = 0)
 
 # Fit the flexible parametric survival model
-mod_flex <- flexsurvspline(Surv(rectime, censrec) ~ hormon, 
-                           data = brcancer, 
-                           k = 3)
+mod_flex <- flexsurv::flexsurvspline(Surv(rectime, censrec) ~ hormon, 
+                                     data = brcancer, k = 3)
 ```
-
 
 Now let us compare the fit of the two models by plotting each of the fitted survival functions on top of the Kaplan-Meier survival curve.
 
@@ -176,7 +174,8 @@ Next, we will show how to use the `simsurv` function to simulate event times und
 ```{r, example2}
 # Fit the model to the brcancer dataset to obtain the "true"
 # parameter values that will be used in our simulation study
-true_mod <- flexsurvspline(Surv(rectime, censrec) ~ hormon, data = brcancer, k = 3)
+true_mod <- flexsurv::flexsurvspline(Surv(rectime, censrec) ~ hormon, 
+                                     data = brcancer, k = 3)
 
 # Define a function to generate one simulated dataset, fit
 # our two models (Weibull and flexible) to the simulated data
@@ -198,8 +197,12 @@ sim_run <- function(true_mod) {
   dat <- merge(cov, dat)
 
   # Fit a Weibull proportional hazards model
-  weib_mod <- flexsurvspline(Surv(eventtime, status) ~ hormon, data = dat, k = 0)
-  flex_mod <- flexsurvspline(Surv(eventtime, status) ~ hormon, data = dat, k = 3)
+  weib_mod <- flexsurv::flexsurvspline(Surv(eventtime, status) ~ hormon, 
+                                       data = dat, k = 0)
+
+  # Fit a flexible parametric proportional hazards model
+  flex_mod <- flexsurv::flexsurvspline(Surv(eventtime, status) ~ hormon, 
+                                       data = dat, k = 3)
   
   # Obtain estimates, standard errors and 95% CI limits for hormone effect
   true_loghr <- true_mod$coefficients[["hormon"]]
@@ -218,7 +221,61 @@ set.seed(543543)
 rowMeans(replicate(100, sim_run(true_mod = true_mod)))
 ```
 
-### Example 3: Simulating under a joint model for longitudinal and survival data
+### Example 3: Simulating under a Weibull model with time-dependent effects
+
+This short example shows how to simulate data under a standard Weibull survival model that incorporates a time-dependent effect (i.e. non-proportional hazards). For the time-dependent effect we will include a single binary covariate (e.g. a treatment indicator) with a protective effect (i.e. a negative log hazard ratio), but we will allow the effect of the covariate to diminish over time. The data generating model will be
+
+$$
+  h_i(t) = \gamma \lambda (t ^{\gamma - 1}) \exp(\beta_0 X_i + \beta_1 X_i\times \log(t))
+$$
+
+where $X_i$ is the binary treatment indicator for individual $i$, $\lambda$ and $\gamma$ are the scale and shape parameters for the Weibull baseline hazard, $\beta_0$ is the log hazard ratio for treatment when $t = 1$ (i.e. when $\log(t) = 0$), and $\beta_1$ quantifies the amount by which the log hazard ratio for treatment changes for each one unit increase in $\log(t)$. Here we are assuming the time-dependent effect is induced by interacting the log hazard ratio with log time, but we could have used some other function of time (for example linear time, $t$, or time squared, $t^2$, if we had wanted to).
+
+We will simulate data for $N = 5000$ individuals under this model, with a maximum follow up time of five years, and using the following "true" parameter values for the data generating model:
+
+* $\beta_0 = -0.5$
+* $\beta_1 = 0.15$
+* $\lambda = 0.1$
+* $\gamma = 1.5$
+
+```{r, tdeexample_sim}
+covs <- data.frame(id = 1:5000, trt = rbinom(5000, 1, 0.5))
+simdat <- simsurv(dist = "weibull", lambdas = 0.1, gammas = 1.5, betas = c(trt = -0.5),
+                  x = covs, tde = c(trt = 0.15), tdefunction = "log", maxt = 5)
+simdat <- merge(simdat, covs)
+head(simdat)
+```
+
+Then let us fit a flexible parametric model with two internal knots (i.e. 3 degrees of freedom) for the baseline hazard, and a time-dependent hazard ratio for the treatment effect. For the time-dependent hazard ratio we will use an interaction with log time (the same as used in the data generating model); this can be easily achieved using the `stpm2` function from the **rstpm2** package and specifying the `tvc` option. Note that the **rstpm2** package and **flexsurv** packages can both be used to fit the Royston and Parmar flexible parametric survival model, however, they differ slightly in their post-estimation functionality and other possible extensions. Here, we use the **rstpm2** package because it allows us to easily plot the time-dependent hazard ratio after fitting the model (as shown in the code below). 
+
+The model with the time-dependent effect for treatment can be estimated using the following code
+
+```{r, tdeexample_mod1}
+mod_tvc <- rstpm2::stpm2(Surv(eventtime, status) ~ trt, 
+                         data = simdat, tvc = list(trt = 1))
+```
+
+And for comparison we can fit the corresponding model, but without the time-dependent effect for treatment (i.e. assuming proportional hazards instead)
+
+```{r, tdeexample_mod2}
+mod_ph <- rstpm2::stpm2(Surv(eventtime, status) ~ trt, 
+                        data = simdat)
+```
+
+Now, we can plot the time-dependent hazard ratio and the time-fixed hazard ratio on the same plot region using the following code
+
+```{r, tdeexample_plothr}
+plot(mod_tvc, newdata = data.frame(trt = 0), type = "hr", 
+     var = "trt", ylim = c(0,1), ci = TRUE, rug = FALSE,
+     main = "Time dependent hazard ratio",
+     ylab = "Hazard ratio", xlab = "Time")
+plot(mod_ph,  newdata = data.frame(trt = 0), type = "hr", 
+     var = "trt", ylim = c(0,1), add = TRUE, ci = FALSE, lty = 2)
+```
+
+From the plot we can see the diminishing effect of treatment under the model with the time-dependent hazard ratio; as time increases the hazard ratio approaches a value of 1. Moreover, note that the hazard ratio is approximately equal to a value of 0.6 (i.e. $\exp(-0.5)$) when $t = 1$, which is what we specified in the data generating model.
+
+### Example 4: Simulating under a joint model for longitudinal and survival data
 
 This example shows how the **simsurv** package can be used to simulate event times under a shared parameter joint model for longitudinal and survival data. 
 

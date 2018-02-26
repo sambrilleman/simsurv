@@ -31,6 +31,7 @@ Suggests:
     flexsurv (>= 1.1.0),
     knitr (>= 1.15.1),
     MASS,
+    rstpm2 (>= 1.4.1),
     survival (>= 2.40.1),
     testthat (>= 1.0.2)
 VignetteBuilder: knitr
