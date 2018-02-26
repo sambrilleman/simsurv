@@ -1,0 +1,285 @@
+---
+title: "Technical background to the simsurv package"
+author: "Sam Brilleman"
+date: "`r Sys.Date()`"
+output: 
+  html_vignette:
+    toc: yes
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Technical background to the simsurv package}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Preamble
+
+This vignette herein describes the methodology used to simulate event times in the **simsurv** package. For a vignette related to usage of the package, including examples and code, please see [How to use the simsurv package](simsurv_usage.html). 
+
+## Introduction
+
+The survival function for individual $i$ is the probability that their “true” event time $T_i^*$ is greater than the current time $t$. That is, the survival function can be defined as
+
+$$
+  S_i (t) = P(T_i^* > t)
+$$
+
+Moreover, the corresponding probability of having failed at or before time $t$ (i.e. having not survived up to time $t$) is the complement to the survival function. That is, the probability of failure is defined as
+
+$$
+  F_i (t) = P(T_i^* \leq t) = 1 - S_i (t)
+$$
+
+If the survival time $T_i^*$ is known to be drawn from some parametric distribution, then it also holds that the definition of the probability of failure, $F_i(t)$, is equivalent to the definition of the cumulative distribution function (CDF) for the distribution of event times. Moreover, probability distribution theory tells us that the CDF for a continuous random variable must follow a uniform distribution on the range 0 to 1 (Mood et al. (1973)). That is, $F_X (X) \sim U(0,1)$ where $F_X (.)$ denotes the CDF for the continuous random variable $X$. Similarly, the complement of the CDF for $X$ must also follow a uniform distribution on the range 0 to 1, that is, $1-F_X (X) \sim U(0,1)$.
+
+These results therefore allow one to conclude that under a standard parametric distributional assumption for the event times $T_i^*$ $(i=1,…,N)$, the survival probability for individual $i$ at their true event time will be a uniform random variable on the range 0 to 1. That is, 
+
+$$
+  S_i (T_i^*) = U_i \sim U(0,1)
+$$
+
+It is then possible to extend these results to the setting of a proportional hazards model. Under a proportional hazards model the survival probability for individual $i$ at their event time $T_i^*$ can be written as 
+
+$$
+  S_i (T_i^*) = \exp \left( -H_0 (T_i^*) \exp(X_i^T \beta) \right) = U_i \sim U(0,1)
+$$
+
+where $H_0(t)=\int_0^t h_0(s) ds$ is the cumulative baseline hazard evaluated at time $t$, and $X_i$ is a vector of covariates with associated population-level (i.e. fixed effect) parameters $\beta$. 
+
+## Cumulative hazard inversion method (Bender et al. (2005))
+
+Rearranging the equation for $S_i(t)$ and solving for $t$ leads to the following general form for the inverted survival function
+
+$$
+  S_i^{-1}(u) = H_0^{-1} \left( -\log(u) \exp(-X_i^T \beta) \right)
+$$
+
+where $S_i^{-1}(u)$ is the inverted survival function for individual $i$, $H_0^{-1} (u)$ corresponds to the inverted cumulative baseline hazard function, and $X_i$ is a vector of covariates with associated population-level (i.e. fixed effect) parameters $\beta$.
+
+Therefore, if the cumulative hazard function is invertible, we can easily simulate a new event time as
+
+$$
+  T_i^s = S_i^{-1}(U_i)
+$$
+
+where $T_i^s$ is the simulated event times for individual $i$, $S_i^{-1}(u)$ is the inverted survival function defined previously, and $U_i$ is a random variable drawn from a $U(0,1)$ distribution. Note that if the cumulative baseline hazard is directly invertible then an analytic form will be available for $S_i^{-1}(u)$. That is, we can just plug in random draws of $U_i$ and directly calcuate the simulated event times. Since independent draws of a $U(0,1)$ random variable are easily obtained using any standard statistical software, this method will be easy and fast for simulating event times. 
+
+This method was first proposed by Bender et al. (2005) and is commonly known as the *cumulative hazard inversion method*.
+
+For the standard parameteric survival distributions included in the **simsurv** package (i.e. Weibull, exponential, Gompertz) an analytic form for $S_i^{-1}(u)$ does exist. Therefore, event times for these standard parametric distributions (assuming proportional hazards) are generated using the cumulative hazard inversion method. The parameterisations for each of these standard parametric distributions are shown next.
+
+### Exponential distribution
+
+For the exponential distribution we have the following:
+
+$$
+  h_i(t) = \lambda \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = \lambda t \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = \exp \left( -\lambda t \exp(X_i^T \beta) \right)
+$$
+
+$$
+  S_i^{-1}(u) =  \left( 
+    \frac{- \log(u)}{\lambda \exp(X_i^T \beta)}
+  \right)
+$$
+
+where $\lambda > 0$ is the rate parameter.
+
+### Weibull distribution
+
+For the Weibull distribution we have the following:
+
+$$
+  h_i(t) = \gamma \lambda (t ^{\gamma - 1}) \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = \lambda (t^{\gamma}) \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = \exp \left( -\lambda (t^{\gamma}) \exp(X_i^T \beta) \right)
+$$
+
+$$
+  S_i^{-1}(u) = \left( 
+    \frac{- \log(u)}{\lambda \exp(X_i^T \beta)}
+  \right) 
+  ^ {1 / \gamma}
+$$
+
+where $\lambda > 0$ and $\gamma > 0$ are the scale and shape parameters, respectively.
+
+### Gompertz distribution
+
+For the Gompertz distribution we have the following:
+
+$$
+  h_i(t) = \lambda \exp(\gamma t) \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = \frac{\lambda (\exp(\gamma t) - 1)}{\gamma} \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = \exp \left( \frac{-\lambda (\exp(\gamma t) - 1)}{\gamma}  \exp(X_i^T \beta) \right)
+$$
+
+$$
+  S_i^{-1}(u) = \frac{1}{\gamma} \log
+  \left[
+    \left( 
+      \frac{- \gamma \log(u)}{\lambda \exp(X_i^T \beta)}
+    \right) + 1
+  \right]  
+$$
+
+where $\lambda > 0$ and $\gamma > 0$ are the shape and scale parameters, respectively. 
+
+## Numerical root finding
+
+If the cumulative baseline hazard function is not invertible, then numerical root finding can be used to solve to $t$. This method has been discussed by both Bender et al. (2005) and Crowther and Lambert (2013). In **simsurv** this is required for the two-component mixture distributions (assuming proportional hazards). An analytical form is available for the survival function of each of these distributions, but numerical root finding must be used to invert the survival function. In practice, the **simsurv** package uses the `stats::uniroot` function based on the method of Brent (1973). This means iteratively finding a solution to the equation $S_i(t) - U_i = 0$.  
+
+The two-component mixture distributions in **simsurv** are parameterised in the same way as the **survsim** Stata package (Crowther and Lambert (2002)). That is, they are additive on the survival scale, with a parameter defining the mixing proportions, i.e.
+
+$$
+  S_0(t) = \pi S_{01}(t) + (1-\pi) S_{02}(t)
+$$
+
+where $S_0(t)$ is the baseline survival function, $S_{01}(t)$ and $S_{02}(t)$ are baseline survival functions for the two component distributions, and $0 \leq \pi \leq 1$ is the mixing parameter. The specific parameterisations for the hazard and survival functions of each of the two-component mixture distributions in **simsurv** are shown next.
+
+### Exponential mixture distribution
+
+For the two-component exponential mixture distribution we have the following:
+
+$$
+  h_i(t) = 
+  \left[
+    \frac
+    {\pi \lambda_1 \exp(-\lambda_1 t) + (1 - \pi) \lambda_2 \exp(-\lambda_2 t) }
+    {\pi \exp(-\lambda_1 t) + (1 - \pi) \exp(-\lambda_2 t) }
+  \right] 
+  \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = - \log
+  \left[ 
+    \pi \exp(-\lambda_1 t) + (1-\pi) \exp(-\lambda_2 t) 
+  \right] 
+  \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = 
+  \left[ 
+    \pi \exp(-\lambda_1 t) + (1-\pi) \exp(-\lambda_2 t) 
+  \right] 
+  ^ {\exp(X_i^T \beta)}
+$$
+
+where $\lambda_1 > 0$ and $\lambda_2 > 0$ are the rate parameters for the component exponential distributions.
+
+### Weibull mixture distribution
+
+For the two-component Weibull mixture distribution we have the following:
+
+$$
+  h_i(t) = 
+  \left[
+    \frac
+    { \pi \gamma_1 \lambda_1 (t^{\gamma_1-1}) \exp(-\lambda_1 (t^{\gamma_1})) + 
+      (1-\pi) \gamma_2 \lambda_2 (t^{\gamma_2-1}) \exp(-\lambda_2 (t^{\gamma_2})) }
+    {\pi \exp(-\lambda_1 (t^{\gamma_1})) + (1-\pi) \exp(-\lambda_2 (t^{\gamma_2}))}
+  \right] 
+  \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = - \log
+  \left[
+    \pi \exp(-\lambda_1 (t^{\gamma_1})) + (1-\pi) \exp(-\lambda_2 (t^{\gamma_2})) 
+  \right] 
+  \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = 
+  \left[
+    \pi \exp(-\lambda_1 (t^{\gamma_1})) + (1-\pi) \exp(-\lambda_2 (t^{\gamma_2})) 
+  \right] 
+  ^ {\exp(X_i^T \beta)}
+$$
+
+where $\lambda_1 > 0$ and $\lambda_2 > 0$ are the scale parameters, and $\gamma_1 > 0$ and $\gamma_2 > 0$ are the shape parameters, for the component Weibull distributions.
+
+### Gompertz mixture distribution
+
+$$
+  h_i(t) = 
+  \left[
+    \frac
+    {
+      \pi \lambda_1 \exp(\gamma_1 t) \exp \left( \frac{-\lambda_1 (\exp(\gamma_1 t) - 1)}{\gamma_1} \right)
+      + (1-\pi) \lambda_2 \exp(\gamma_2 t) \exp \left( \frac{-\lambda_2 (\exp(\gamma_2 t) - 1)}{\gamma_2} \right)
+    }
+    {
+      \pi \exp \left( \frac{-\lambda_1 (\exp(\gamma_1 t) - 1)}{\gamma_1} \right)
+      + (1-\pi) \exp \left( \frac{-\lambda_2 (\exp(\gamma_2 t) - 1)}{\gamma_2} \right)
+    }
+  \right]
+  \exp(X_i^T \beta)
+$$
+
+$$
+  H_i(t) = - \log
+  \left[
+    \pi 
+    \exp \left( \frac{-\lambda_1 (\exp(\gamma_1 t) - 1)}{\gamma_1} \right)
+    + (1-\pi) 
+    \exp \left( \frac{-\lambda_2 (\exp(\gamma_2 t) - 1)}{\gamma_2} \right)
+  \right] 
+  \exp(X_i^T \beta)
+$$
+
+$$
+  S_i(t) = 
+  \left[
+    \pi 
+    \exp \left( \frac{-\lambda_1 (\exp(\gamma_1 t) - 1)}{\gamma_1} \right)
+    + (1-\pi) 
+    \exp \left( \frac{-\lambda_2 (\exp(\gamma_2 t) - 1)}{\gamma_2} \right)
+  \right] 
+  ^ {\exp(X_i^T \beta)}
+$$
+
+## Extending to time-dependent effects or user-defined hazard functions
+
+If one can obtain an algebraic closed-form solution for the inverse cumulative baseline hazard, $H_0^{-1}(u)$, then a major benefit of the cumulative hazard inversion method is that it is simple and computationally efficient. Moreover, it can be used to generate survival times for a variety of standard parametric baseline hazards, for example, the exponential, Weibull or Gompertz distributions. Even if the cumulative baseline hazard cannot be inverted analytically then one can still use numerical root finding, as described in the previous section, to numerically invert the survival function and solve for $t$. 
+
+However, using numerical root finding still requires an analytical form for the survival function. For some complex data generating processes it may not be possible to obtain a closed-form solution to the cumulative baseline hazard $H_0 (t)$ and therefore the form of $S_i(t)$ will also be intractable. Crowther and Lambert (2013) therefore proposed an extension to overcome these issues. Their extension incorporates *both* numerical root finding and numerical quadrature. The numerical quadrature is used to evaluate the cumulative hazard in situations where it cannot be evaluated analytically. 
+
+An example of a situation where their method is required is the introduction of time-dependent effects on the hazard scale (i.e. non-proportional hazards). The introduction of time-dependent effects often leads to an intractable integral when evaluating the cumulative hazard. The method therefore involves iterating between numerical quadrature and numerical root finding until an appropriate solution for $t$ is obtained. This is the method used by the **simsurv** package when the user supplies their own hazard or log hazard function for generating the event times, or when they are simulating with time-dependent effects (i.e. non-proportional hazards). The numerical integration is based on Gauss-Kronrod quadrature with a default of 15 nodes (although the user can choose between 7, 11, or 15 nodes). For further details on the method we refer the reader to the the paper by Crowther and Lambert (2013).
+
+## References
+
+Bender R, Augustin T, Blettner M. Generating survival times to simulate Cox proportional hazards models. *Stat Med* 2005;**24**(11):1713-1723. \doi{10.1002/sim.2059}
+
+Brent R. *Algorithms for Minimization without Derivatives*. Englewood Cliffs, NJ: Prentice-Hall, 1973.
+
+Crowther MJ, Lambert PC. Simulating complex survival data. *Stata J* 2012;**12**(4):674-687.
+
+Crowther MJ, Lambert PC. Simulating biologically plausible complex survival data. *Stat Med* 2013;**32**(23):4118-4134. \doi{10.1002/sim.5823}
+
+Mood AM, Graybill FA, Boes DC. *Introduction to the Theory of Statistics*. McGraw-Hill: New York, 1974.

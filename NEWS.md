@@ -1,7 +1,11 @@
-### simsurv 0.1.0-9000 (27/7/2017)
+### simsurv 0.2.0 (26/2/2018) 
+ 
+#### New features    
+   * Added technical and example usage vignettes
+   * Added user-specified cumulative hazard or log cumulative hazard
+   * Added analytical forms for the inverted survival function when generating survival times from standard distributions (instead of using numerical root finding). This has lead to about a 5-fold increase in speed when simulating event times from standard parametric distributions.
+ 
   
-Under development
-
 ### simsurv 0.1.0 (27/7/2017)
   
 Initial CRAN release

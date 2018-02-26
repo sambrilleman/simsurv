@@ -5,22 +5,32 @@ simsurv
 
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/simsurv)](http://www.r-pkg.org/pkg/simsurv) [![License](https://img.shields.io/badge/License-GPL%20%28%3E=%203%29-brightgreen.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
 
-**simsurv** is an R package that allows the user to simulate survival times from standard parametric survival distributions (exponential, Weibull, and Gompertz), 2-component mixture distributions, or a user-defined \[log\] hazard function. Baseline covariates can be included under a proportional hazards assumption. Time dependent effects (i.e. non-proportional hazards) can be included by interacting covariates with linear time or some transformation of time.
+**simsurv** is an R package that allows the user to simulate survival times from standard parametric survival distributions (exponential, Weibull, and Gompertz), 2-component mixture distributions, or a user-defined hazard function, log hazard function, cumulative hazard function, or log cumulative hazard function. Baseline covariates can be included under a proportional hazards assumption. Time dependent effects (i.e. non-proportional hazards) can be included by interacting covariates with linear time or some transformation of time.
 
 Under the 2-component mixture distributions the baseline survival at time *t* is taken to be *S(t) = p x S\_1(t) + (1 - p) x S\_2(t)* where *S\_1(t)* and *S\_2(t)* are the baseline survival under each component of the mixture distribution and *p* is the mixing parameter. Each component of the mixture distribution is assumed to be either exponential, Weibull or Gompertz. The 2-component mixture distributions can allow for a variety of flexible baseline hazard functions (see Crowther and Lambert (2013) for some examples).
 
-If the user wishes to provide a user-defined \[log\] hazard function (instead of using one of the standard parametric survival distributions) then this is also possible. If a user-defined \[log\] hazard function is specified, then this is allowed to be time-dependent, and the resulting cumulative hazard function does not need to have a closed-form solution. The survival times are generated using the approach described in Crowther and Lambert (2013), whereby the cumulative hazard is evaluated using numerical quadrature and survival times are generated using an iterative algorithm which nests the quadrature-based evaluation of the cumulative hazard inside Brent's (1973) univariate root finder. Not requiring a closed form solution to the cumulative hazard function has the benefit that survival times can be generated for complex models such as joint longitudinal and survival models; the package documentation provides an example of this.
+If the user wishes to provide a user-defined \[log\] \[cumulative\] hazard function (instead of using one of the standard parametric survival distributions) then this is also possible. If a user-defined hazard or log hazard function is specified, then this is allowed to be time-dependent, and the resulting cumulative hazard function does not need to have a closed-form solution. The survival times are generated using the approach described in Crowther and Lambert (2013), whereby the cumulative hazard is evaluated using numerical quadrature and survival times are generated using an iterative algorithm which nests the quadrature-based evaluation of the cumulative hazard inside Brent's (1973) univariate root finder. Not requiring a closed form solution to the cumulative hazard function has the benefit that survival times can be generated for complex models such as flexible (spline-based) baseline hazards or under joint longitudinal and survival models; the package documentation and vignettes provide examples of this.
+
+For further details on the underlying methodology and examples of usage, please see the package vignettes (available [here](https://cran.r-project.org/web/packages/simsurv/index.html)).
 
 Note that this package is modelled on the user-written **survsim** package available in the Stata software (see Crowther and Lambert (2012)).
 
-**Note:** Please note that the version available on GitHub is the most up-to-date *development* version of the package. A stable version of the package will be available from CRAN once it is released.
+**Note:** Please note that the version available on GitHub is the most up-to-date *development* version of the package. A stable version of the package is available from the Comprehensive R Archive Network (CRAN); type `install.packages("simsurv")` into your R session to download it.
 
 Getting Started
 ---------------
 
-### Installation
+### Installation: stable release
 
-You can install **simsurv** directly from GitHub using the **devtools** package. To do this you should first check you have devtools installed by executing the following commands from within your R session:
+You can install the **simsurv** package directly from CRAN. Just type the following into your R session console:
+
+``` r
+install.packages("simsurv")
+```
+
+### Installation: development version
+
+If, for some reason, you wish to download the development version from GitHub, then this can be done easily using the **devtools** package. To do this you should first check you have devtools installed by executing the following commands from within your R session:
 
 ``` r
 if (!require(devtools)) {
@@ -38,22 +48,25 @@ install_github("sambrilleman/simsurv")
 Examples
 --------
 
+Please also see the package vignettes for more detailed examples and a description of the methodology underpinning the **simsurv** package.
+
 ### Simpler examples
 
 Generate times from a Weibull model including a binary treatment variable, with log hazard ratio of -0.5, and censoring after 5 years:
 
 ``` r
+set.seed(13579)
 covs <- data.frame(id = 1:1000, trt = stats::rbinom(1000, 1L, 0.5))
 s1 <- simsurv(lambdas = 0.1, gammas = 1.5,
               x = covs, betas = c(trt = -0.5), maxt = 5)
 head(s1)
 #>   id eventtime status
-#> 1  1 5.0000000      0
-#> 2  2 5.0000000      0
-#> 3  3 4.9634817      1
-#> 4  4 4.4749500      1
-#> 5  5 0.7077079      1
-#> 6  6 2.8800222      1
+#> 1  1  5.000000      0
+#> 2  2  1.538271      1
+#> 3  3  0.962767      1
+#> 4  4  2.840668      1
+#> 5  5  5.000000      0
+#> 6  6  1.141409      1
 ```
 
 Generate times from a Gompertz model:

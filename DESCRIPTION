@@ -1,19 +1,20 @@
 Package: simsurv
 Type: Package
 Title: Simulate Survival Data
-Version: 0.1.0-9000
+Version: 0.2.0
 Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu", 
              role = c("cre", "aut", "cph")))
 Maintainer: Sam Brilleman <sam.brilleman@monash.edu>
 Description: Simulate survival times from standard parametric survival 
     distributions (exponential, Weibull, Gompertz), 2-component mixture 
-    distributions, or a user-defined hazard or log hazard function. Baseline 
+    distributions, or a user-defined hazard, log hazard, cumulative hazard,
+    or log cumulative hazard function. Baseline 
     covariates can be included under a proportional hazards assumption. Time 
     dependent effects (i.e. non-proportional hazards) can be included by 
     interacting covariates with linear time or some transformation of time.
     The 2-component mixture distributions can allow for a variety of flexible
     baseline hazard functions. If the user wishes to provide a user-defined 
-    hazard or log hazard function then this is also possible, and the resulting
+    hazard or log hazard function then this is possible, and the resulting
     cumulative hazard function does not need to have a closed-form solution. 
     Note that this package is modelled on the 'survsim' package available in 
     the 'Stata' software (see Crowther and Lambert (2012) 
@@ -27,9 +28,13 @@ Imports:
     stats
 Suggests:
     eha (>= 2.4.5),
+    flexsurv (>= 1.1.0),
+    knitr (>= 1.15.1),
     MASS,
+    rstpm2 (>= 1.4.1),
     survival (>= 2.40.1),
     testthat (>= 1.0.2)
+VignetteBuilder: knitr
 LazyData: true
 BugReports: https://github.com/sambrilleman/simsurv/issues
 RoxygenNote: 6.0.1
