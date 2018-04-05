@@ -3,7 +3,7 @@
 simsurv
 =======
 
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/simsurv)](http://www.r-pkg.org/pkg/simsurv) [![License](https://img.shields.io/badge/License-GPL%20%28%3E=%203%29-brightgreen.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/simsurv)](http://www.r-pkg.org/pkg/simsurv) [![License](https://img.shields.io/badge/License-GPL%20%28%3E=%203%29-brightgreen.svg)](http://www.gnu.org/licenses/gpl-3.0.html) [![](https://cranlogs.r-pkg.org/badges/simsurv)](https://cran.r-project.org/package=simsurv) [![](https://cranlogs.r-pkg.org/badges/grand-total/simsurv)](https://CRAN.R-project.org/package=simsurv)
 
 **simsurv** is an R package that allows the user to simulate survival times from standard parametric survival distributions (exponential, Weibull, and Gompertz), 2-component mixture distributions, or a user-defined hazard function, log hazard function, cumulative hazard function, or log cumulative hazard function. Baseline covariates can be included under a proportional hazards assumption. Time dependent effects (i.e. non-proportional hazards) can be included by interacting covariates with linear time or some transformation of time.
 
