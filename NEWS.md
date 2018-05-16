@@ -1,14 +1,20 @@
-### simsurv 0.2.1-9000 (X/X/2018) 
+### simsurv 0.2.2-9000 (X/X/2018) 
  
 Current development version
+ 
+---
+
+### simsurv 0.2.2 (17/5/2018)
+
+#### New features
+   * The `uniroot` function (called internally by `simsurv`) now solves - H(t) - log(u) = 0 instead of exp(-H(t)) - u = 0, i.e. it is on log scale.
    
 ---
 
 ### simsurv 0.2.1 (16/5/2018)
 
 #### Bug fixes
-   * The `interval` argument of `simsurv` supports a lower limit of zero.
-     (thanks to @ellessenne)
+   * The `interval` argument of `simsurv` supports a lower limit of zero (thanks to Alessandro Gasparini, @ellessenne).
    
 ---
 
