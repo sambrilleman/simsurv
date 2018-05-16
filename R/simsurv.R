@@ -59,8 +59,8 @@
 #'   model for the survival distribution. If \code{TRUE}, then the distribution
 #'   of the mixture components is determined by the \code{dist} argument.
 #' @param pmix Scalar between 0 and 1 defining the mixing parameter when
-#'   \code{mixture = TRUE}. The baseline survival at time t is taken to be
-#'   \eqn{S(t) = p * S_1(t) + (1 - p) * S_2(t)}
+#'   \code{mixture = TRUE}. The baseline survival at time \eqn{t} is taken to be
+#'   \eqn{S(t) = p S_1(t) + (1 - p) S_2(t)}
 #'   where \eqn{S_1(t)} and \eqn{S_2(t)} are the baseline survival under each
 #'   component of the mixture distribution.
 #' @param hazard Optionally, a user-defined hazard function, with arguments
@@ -141,15 +141,15 @@
 #' \eqn{lambda} and shape parameter \eqn{gamma} (with \eqn{gamma} fixed equal
 #' to 1 for the exponential distribution) the baseline hazard and survival
 #' functions used by \code{simsurv} are:
-#' \eqn{h(t) = gamma * lambda * t ^ {gamma - 1}} and
-#' \eqn{S(t) = exp(-lambda * t ^ {gamma})}.
+#' \eqn{h(t) = \gamma \lambda t ^ {\gamma - 1}} and
+#' \eqn{S(t) = \exp(-\lambda t ^ {\gamma})}.
 #'
 #' Note that this parameterisation differs from the one used by
 #' \code{\link{dweibull}} or the \code{\link[eha]{phreg}} modelling
 #' function in the \pkg{eha} package. The parameterisation used in those
 #' functions can be achieved by transforming the scale parameter via the
-#' relationship \eqn{b = lambda ^ {-1 / gamma}}, or equivalently
-#' \eqn{lambda = b ^ {-gamma}} where \eqn{b} is the scale parameter under
+#' relationship \eqn{b = \lambda ^ {\frac{-1}{\gamma}}}, or equivalently
+#' \eqn{\lambda = b ^ {-\gamma}} where \eqn{b} is the scale parameter under
 #' the parameterisation of the Weibull distribution used by
 #' \code{\link{dweibull}} or \code{\link[eha]{phreg}}.
 #' }
@@ -385,11 +385,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       tt <- sapply(ids, function(i) {
         x_i <- subset_df(x, i, idvar = idvar)
         betas_i <- subset_df(betas, i, idvar = idvar)
-        u_i <- stats::runif(1)
+        log_u_i <- log(stats::runif(1))
         # check whether S(t) is still greater than random uniform variable u_i at the
         # upper limit of uniroot's interval (otherwise uniroot will return an error)
         at_limit <- rootfn_surv(interval[2], survival = survival, x = x_i,
-                                betas = betas_i, u = u_i, ...)
+                                betas = betas_i, log_u = log_u_i, ...)
         if (is.nan(at_limit)) {
           STOP_nan_at_limit()
         } else if (at_limit > 0) {
@@ -401,7 +401,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         } else {
           t_i <- stats::uniroot(
             rootfn_surv, survival = survival, x = x_i, betas = betas_i,
-            u = u_i, ..., interval = interval)$root
+            log_u = log_u_i, ..., interval = interval)$root
         }
         return(t_i)
       })
@@ -423,11 +423,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
-      u_i <- stats::runif(1)
+      log_u_i <- log(stats::runif(1))
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_hazard(interval[2], hazard = hazard, x = x_i,
-                                betas = betas_i, u = u_i, qq = qq,
+                                betas = betas_i, log_u = log_u_i, qq = qq,
                                 tde = tde, tdefunction = tdefunction)
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
@@ -440,7 +440,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       } else {
         t_i <- stats::uniroot(
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
-          u = u_i, qq = qq, tde = tde, tdefunction = tdefunction,
+          log_u = log_u_i, qq = qq, tde = tde, tdefunction = tdefunction,
           interval = interval)$root
       }
       return(t_i)
@@ -457,11 +457,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
-      u_i <- stats::runif(1)
+      log_u_i <- log(stats::runif(1))
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_cumhazard(interval[2], cumhazard = cumhazard, x = x_i,
-                                   betas = betas_i, u = u_i, ...)
+                                   betas = betas_i, log_u = log_u_i, ...)
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
@@ -473,7 +473,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       } else {
         t_i <- stats::uniroot(
           rootfn_cumhazard, cumhazard = cumhazard, x = x_i, betas = betas_i,
-          u = u_i, ..., interval = interval)$root
+          log_u = log_u_i, ..., interval = interval)$root
       }
       return(t_i)
     })
@@ -489,11 +489,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
-      u_i <- stats::runif(1)
+      log_u_i <- log(stats::runif(1))
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_hazard(interval[2], hazard = hazard, x = x_i,
-                                betas = betas_i, u = u_i, qq = qq, ...)
+                                betas = betas_i, log_u = log_u_i, qq = qq, ...)
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
@@ -505,7 +505,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       } else {
         t_i <- stats::uniroot(
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
-          u = u_i, qq = qq, ..., interval = interval)$root
+          log_u = log_u_i, qq = qq, ..., interval = interval)$root
       }
       return(t_i)
     })
@@ -766,14 +766,15 @@ validate_gammas <- function(gammas = NULL, dist, mixture) {
 #   get_quadpoints.
 # @param ... Further arguments passed to hazard.
 rootfn_hazard <- function(t, hazard, x = NULL, betas = NULL,
-                   u = stats::runif(1), qq = get_quadpoints(nodes = 15), ...) {
+                          log_u = log(stats::runif(1)),
+                          qq = get_quadpoints(nodes = 15), ...) {
   qpts <- unstandardise_quadpoints(qq$points, 0, t)
   qwts <- unstandardise_quadweights(qq$weights, 0, t)
   cumhaz <- sum(unlist(lapply(1:length(qpts), function(q) {
     qwts[[q]] * hazard(t = qpts[[q]], x = x, betas = betas, ...)
   })))
-  surv <- exp(-cumhaz)
-  return(surv - u)
+  logsurv <- -cumhaz
+  return(logsurv - log_u)
 }
 
 # Function for calculating the survival probability at time t minus a
@@ -784,14 +785,14 @@ rootfn_hazard <- function(t, hazard, x = NULL, betas = NULL,
 # @param t The event time, unknown but solution to be found using \code{uniroot}
 # @param cumhazard The user-defined cumulative hazard function, with named
 #   arguments x, betas, aux
-# @param x Vector of covariate data to be supplied to survival.
-# @param betas Vector of parameter values to be supplied to survival.
-# @param ... Further arguments passed to survival.
+# @param x Vector of covariate data to be supplied to cumhazard.
+# @param betas Vector of parameter values to be supplied to cumhazard.
+# @param ... Further arguments passed to cumhazard.
 rootfn_cumhazard <- function(t, cumhazard, x = NULL, betas = NULL,
-                             u = stats::runif(1), ...) {
+                             log_u = log(stats::runif(1)), ...) {
   cumhaz <- cumhazard(t = t, x = x, betas = betas, ...)
-  surv <- exp(-cumhaz)
-  return(surv - u)
+  logsurv <- -cumhaz
+  return(logsurv - log_u)
 }
 
 # Function for calculating the survival probability at time t minus a
@@ -800,14 +801,15 @@ rootfn_cumhazard <- function(t, cumhazard, x = NULL, betas = NULL,
 # should provide the simulated survival time for one individual.
 #
 # @param t The event time, unknown but solution to be found using \code{uniroot}
-# @param hazard The survival function, with named arguments x, betas, aux
+# @param survival The survival function, with named arguments x, betas, aux
 # @param x Vector of covariate data to be supplied to survival.
 # @param betas Vector of parameter values to be supplied to survival.
 # @param ... Further arguments passed to survival.
 rootfn_surv <- function(t, survival, x = NULL, betas = NULL,
-                        u = stats::runif(1), ...) {
+                        log_u = log(stats::runif(1)), ...) {
   surv <- survival(t = t, x = x, betas = betas, ...)
-  return(surv - u)
+  logsurv <- log(surv)
+  return(logsurv - log_u)
 }
 
 # Check that x is either NULL or a data frame
