@@ -1,9 +1,11 @@
 Package: simsurv
 Type: Package
 Title: Simulate Survival Data
-Version: 0.2.0-9000
-Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu", role = c("cre", "aut", "cph")),
-             person("Alessandro", "Gasparini", email = "ag475@leicester.ac.uk", role = "ctb"))
+Version: 0.2.1
+Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu", 
+                    role = c("cre", "aut", "cph")),
+             person("Alessandro", "Gasparini", email = "ag475@leicester.ac.uk", 
+                    role = "ctb"))
 Maintainer: Sam Brilleman <sam.brilleman@monash.edu>
 Description: Simulate survival times from standard parametric survival 
     distributions (exponential, Weibull, Gompertz), 2-component mixture 

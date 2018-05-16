@@ -1,9 +1,15 @@
-### simsurv 0.2.0-9000 (X/X/2018) 
+### simsurv 0.2.1-9000 (X/X/2018) 
  
 Current development version
+   
+---
+
+### simsurv 0.2.1 (16/5/2018)
 
 #### Bug fixes
    * The `interval` argument of `simsurv` supports a lower limit of zero.
+     (thanks to @ellessenne)
+   
 ---
 
 ### simsurv 0.2.0 (6/3/2018) 
