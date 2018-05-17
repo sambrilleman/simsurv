@@ -774,7 +774,7 @@ rootfn_hazard <- function(t, hazard, x = NULL, betas = NULL,
     qwts[[q]] * hazard(t = qpts[[q]], x = x, betas = betas, ...)
   })))
   logsurv <- -cumhaz
-  return(logsurv - log_u)
+  return_finite(logsurv - log_u)
 }
 
 # Function for calculating the survival probability at time t minus a
@@ -792,7 +792,7 @@ rootfn_cumhazard <- function(t, cumhazard, x = NULL, betas = NULL,
                              log_u = log(stats::runif(1)), ...) {
   cumhaz <- cumhazard(t = t, x = x, betas = betas, ...)
   logsurv <- -cumhaz
-  return(logsurv - log_u)
+  return_finite(logsurv - log_u)
 }
 
 # Function for calculating the survival probability at time t minus a
@@ -809,7 +809,7 @@ rootfn_surv <- function(t, survival, x = NULL, betas = NULL,
                         log_u = log(stats::runif(1)), ...) {
   surv <- survival(t = t, x = x, betas = betas, ...)
   logsurv <- log(surv)
-  return(logsurv - log_u)
+  return_finite(logsurv - log_u)
 }
 
 # Check that x is either NULL or a data frame
@@ -906,7 +906,6 @@ STOP_increase_limit <- function() {
        "interval using the 'interval' argument.", call. = FALSE)
 }
 
-
 # Convert a standardised quadrature node to an unstandardised value based on
 # the specified integral limits
 #
@@ -926,6 +925,20 @@ unstandardise_quadpoints <- function(t, a, b) {
 unstandardise_quadweights <- function(t, a, b) {
   ((b - a) / 2) * t
 }
+
+# Ensure a returned value is not -Inf or +Inf
+#
+# @param x The numeric value that may need to be censored at the minimum
+#   or maximum (finite) double for the given machine.
+return_finite <- function(x) {
+  x <- min(x, max_double())
+  x <- max(x, min_double())
+  x
+}
+
+# Return the minimum or maximum double for the given machine
+min_double <- function() { -.Machine$double.xmax }
+max_double <- function() { .Machine$double.xmax }
 
 # Function to return standardised GK quadrature points and weights
 #
