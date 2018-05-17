@@ -4,7 +4,7 @@ Current development version
  
 ---
 
-### simsurv 0.2.2 (17/5/2018)
+### simsurv 0.2.2 (18/5/2018)
 
 #### New features
    * The `uniroot` function (called internally by `simsurv`) now solves - H(t) - log(u) = 0 instead of exp(-H(t)) - u = 0, i.e. it is on log scale.
