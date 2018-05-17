@@ -202,6 +202,7 @@ This package is modelled on the user-written \code{survsim} package
   # Generate times from a Weibull model including a binary
   # treatment variable, with log(hazard ratio) = -0.5, and censoring
   # after 5 years:
+  set.seed(9911)
   covs <- data.frame(id = 1:100, trt = stats::rbinom(100, 1L, 0.5))
   s1 <- simsurv(lambdas = 0.1, gammas = 1.5, betas = c(trt = -0.5),
                 x = covs, maxt = 5)
