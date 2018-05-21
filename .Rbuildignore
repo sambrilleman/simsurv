@@ -3,5 +3,4 @@
 \.github/*
 ^README\.md$
 ^README\.Rmd$
-^NEWS\.md$
 ^cran-comments\.md$
