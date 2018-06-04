@@ -98,7 +98,8 @@
 #' @param interval The interval over which to search for the
 #'   \code{\link{uniroot}} corresponding to each simulated event time.
 #' @param seed The \code{\link[=set.seed]{seed}} to use.
-#' @param ... Other arguments passed to \code{hazard} or \code{loghazard}.
+#' @param ... Other arguments passed to \code{hazard}, \code{loghazard},
+#'   \code{cumhazard}, or \code{logcumhazard}.
 #'
 #' @details The \code{simsurv} function simulates survival times from
 #' standard parametric survival distributions (exponential, Weibull, Gompertz),
