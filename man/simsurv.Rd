@@ -4,10 +4,11 @@
 \alias{simsurv}
 \title{Simulate survival data}
 \usage{
-simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas, x,
-  betas, tde, tdefunction = NULL, mixture = FALSE, pmix = 0.5, hazard,
-  loghazard, cumhazard, logcumhazard, idvar = NULL, ids = NULL,
+simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas,
+  x, betas, tde, tdefunction = NULL, mixture = FALSE, pmix = 0.5,
+  hazard, loghazard, cumhazard, logcumhazard, idvar = NULL, ids = NULL,
   nodes = 15, maxt = NULL, interval = c(1e-08, 500),
+  rootsolver = c("uniroot", "dfsane"), rootfun = log,
   seed = sample.int(.Machine$integer.max, 1), ...)
 }
 \arguments{
@@ -119,9 +120,31 @@ will be set to zero indicating that the individual was right-censored.}
 \item{interval}{The interval over which to search for the
 \code{\link{uniroot}} corresponding to each simulated event time.}
 
+\item{rootsolver}{Character string specifying the function to use for
+univariate root finding when required. This can currently be
+\code{"uniroot"} for using the \code{\link[stats]{uniroot}} function, or
+\code{"dfsane"} for using the \code{\link[BB]{dfsane}} function.}
+
+\item{rootfun}{A function to apply to each side of the root finding equation
+when numerical root finding is used to solve for the simulated event time.
+An appropriate function helps to improve numerical stability. The default
+is to use a log transformation; that is, to solve \eqn{log(S(T)) - log(U) = 0}
+where \eqn{S(T)} is the survival probability at the event time and
+\eqn{U} is a uniform random variate. Suitable alternatives might be to
+specify \code{rootfun = NULL}, which corresponds to \eqn{S(T) - U = 0},
+or \code{rootfun = sqrt}, which corresponds to \eqn{sqrt(S(T)) - sqrt(U) = 0}.
+It is unexpected that the user should need to change this argument from its
+default value, except perhaps in the extreme case that the numerical root
+finding fails.}
+
 \item{seed}{The \code{\link[=set.seed]{seed}} to use.}
 
-\item{...}{Other arguments passed to \code{hazard} or \code{loghazard}.}
+\item{...}{Other arguments passed to \code{hazard}, \code{loghazard},
+\code{cumhazard}, or \code{logcumhazard}.}
+
+\item{init}{A positive scalar specifying the initial value for the univariate
+root finding algorithm. This is only relevant when root finding is being
+used and \code{rootsolver = "dfsane"}.}
 }
 \value{
 A data frame with a row for each individual, and the following three

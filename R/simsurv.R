@@ -97,6 +97,10 @@
 #'   the Gauss-Kronrod quadrature. Can be 7, 11, or 15.
 #' @param interval The interval over which to search for the
 #'   \code{\link{uniroot}} corresponding to each simulated event time.
+#' @param rootsolver Character string specifying the function to use for
+#'   univariate root finding when required. This can currently be
+#'   \code{"uniroot"} for using the \code{\link[stats]{uniroot}} function, or
+#'   \code{"dfsane"} for using the \code{\link[BB]{dfsane}} function.
 #' @param rootfun A function to apply to each side of the root finding equation
 #'   when numerical root finding is used to solve for the simulated event time.
 #'   An appropriate function helps to improve numerical stability. The default
@@ -108,6 +112,9 @@
 #'   It is unexpected that the user should need to change this argument from its
 #'   default value, except perhaps in the extreme case that the numerical root
 #'   finding fails.
+#' @param init A positive scalar specifying the initial value for the univariate
+#'   root finding algorithm. This is only relevant when root finding is being
+#'   used and \code{rootsolver = "dfsane"}.
 #' @param seed The \code{\link[=set.seed]{seed}} to use.
 #' @param ... Other arguments passed to \code{hazard}, \code{loghazard},
 #'   \code{cumhazard}, or \code{logcumhazard}.
@@ -289,10 +296,12 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
                     mixture = FALSE, pmix = 0.5, hazard, loghazard,
                     cumhazard, logcumhazard,
                     idvar = NULL, ids = NULL, nodes = 15,
-                    maxt = NULL, interval = c(1E-8, 500), rootfun = log,
+                    maxt = NULL, interval = c(1E-8, 500),
+                    rootsolver = c("uniroot", "dfsane"), rootfun = log,
                     seed = sample.int(.Machine$integer.max, 1), ...) {
   set.seed(seed)
   dist <- match.arg(dist)
+  rootsolver <- match.arg(rootsolver)
   if (!is.numeric(interval) || !length(interval) == 2)
     stop("'interval' should a length 2 numeric vector.")
   if (!all(interval >= 0))
@@ -304,6 +313,10 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
   if (!is.function(rootfun)) {
     err <- stop("'rootfun' should be NULL or a function.")
     rootfun <- tryCatch(match.fun(rootfun), error = err)
+  }
+  if (rootsolver == "dfsane") {
+    if (!requireNamespace("BB"))
+      stop("the 'BB' package must be installed to use 'rootsolver = \"dfsane\".")
   }
   if (missing(lambdas))
     lambdas <- NULL
@@ -417,10 +430,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
           } else { # individual will be censored anyway, so just return interval[2]
             return(interval[2])
           }
-        } else {
+        } else if (rootsolver == "uniroot") {
           t_i <- stats::uniroot(
             rootfn_surv, survival = survival, x = x_i, betas = betas_i,
-            u = u_i, rootfun = rootfun, ..., interval = interval)$root
+            u = u_i, rootfun = rootfun, ..., interval = interval,
+            check.conv = TRUE)$root
+        } else if (rootsolver == "dfsane") {
+          K <- 1E-6
+          conv <- 1
+          while (K < 1 && !conv == 0) {
+            t_i <- BB::dfsane(
+              K * interval[2], rootfn_surv, survival = survival, x = x_i,
+              betas = betas_i, u = u_i, rootfun = rootfun, ...,
+              quiet = TRUE, alertConvergence = FALSE,
+              control = list(trace = FALSE))
+            K <- 2 * K
+            conv <- t_i$convergence
+          }
+          if (!conv == 0)
+            stop("Root finding algorithm did not converge. ",
+                 "Try specifying 'rootsolver = \"uniroot\"'.")
+          t_i <- t_i$par
+        } else {
+          stop("Bug found: unknown 'rootsolver'.")
         }
         return(t_i)
       })
@@ -456,11 +488,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         } else { # individual will be censored anyway, so just return interval[2]
           return(interval[2])
         }
-      } else {
+      } else if (rootsolver == "uniroot") {
         t_i <- stats::uniroot(
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i, u = u_i,
           rootfun = rootfun, qq = qq, tde = tde, tdefunction = tdefunction,
-          interval = interval)$root
+          interval = interval, check.conv = TRUE)$root
+      } else if (rootsolver == "dfsane") {
+        K <- 1E-6
+        conv <- 1
+        while (K < 1 && !conv == 0) {
+          t_i <- BB::dfsane(
+            K * interval[2], rootfn_hazard, hazard = hazard, x = x_i,
+            betas = betas_i, u = u_i, rootfun = rootfun, qq = qq,
+            tde = tde, tdefunction = tdefunction, quiet = TRUE,
+            alertConvergence = FALSE, control = list(trace = FALSE))
+          K <- 2 * K
+          conv <- t_i$convergence
+        }
+        if (!conv == 0)
+          stop("Root finding algorithm did not converge. ",
+               "Try specifying 'rootsolver = \"uniroot\"'.")
+        t_i <- t_i$par
+      } else {
+        stop("Bug found: unknown 'rootsolver'.")
       }
       return(t_i)
     })
@@ -490,10 +540,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         } else { # individual will be censored anyway, so just return interval[2]
           return(interval[2])
         }
-      } else {
+      } else if (rootsolver == "uniroot") {
         t_i <- stats::uniroot(
           rootfn_cumhazard, cumhazard = cumhazard, x = x_i, betas = betas_i,
-          u = u_i, rootfun = rootfun, ..., interval = interval)$root
+          u = u_i, rootfun = rootfun, ..., interval = interval,
+          check.conv = TRUE)$root
+      } else if (rootsolver == "dfsane") {
+        K <- 1E-6
+        conv <- 1
+        while (K < 1 && !conv == 0) {
+          t_i <- BB::dfsane(
+            K * interval[2], rootfn_cumhazard, cumhazard = cumhazard,
+            x = x_i, betas = betas_i, u = u_i, rootfun = rootfun,
+            ..., quiet = TRUE, alertConvergence = FALSE,
+            control = list(trace = FALSE))
+          K <- 2 * K
+          conv <- t_i$convergence
+        }
+        if (!conv == 0)
+          stop("Root finding algorithm did not converge. ",
+               "Try specifying 'rootsolver = \"uniroot\"'.")
+        t_i <- t_i$par
+      } else {
+        stop("Bug found: unknown 'rootsolver'.")
       }
       return(t_i)
     })
@@ -523,10 +592,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         } else { # individual will be censored anyway, so just return interval[2]
           return(interval[2])
         }
-      } else {
+      } else if (rootsolver == "uniroot") {
         t_i <- stats::uniroot(
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
-          u = u_i, rootfun = rootfun, qq = qq, ..., interval = interval)$root
+          u = u_i, rootfun = rootfun, qq = qq, ..., interval = interval,
+          check.conv = TRUE)$root
+      } else if (rootsolver == "dfsane") {
+        K <- 1E-6
+        conv <- 1
+        while (K < 1 && !conv == 0) {
+          t_i <- suppressWarnings(BB::dfsane(
+            K * interval[2], rootfn_hazard, hazard = hazard, x = x_i,
+            betas = betas_i, u = u_i, rootfun = rootfun, qq = qq,
+            ..., quiet = TRUE, alertConvergence = FALSE,
+            control = list(trace = FALSE)))
+          K <- 2 * K
+          conv <- t_i$convergence
+        }
+        if (!conv == 0)
+          stop("Root finding algorithm did not converge. ",
+               "Try specifying 'rootsolver = \"uniroot\"'.")
+        t_i <- t_i$par
+      } else {
+        stop("Bug found: unknown 'rootsolver'.")
       }
       return(t_i)
     })
@@ -931,7 +1019,12 @@ STOP_nan_at_limit <- function() {
 }
 STOP_increase_limit <- function() {
   stop("Could not find the simulated survival time for some individuals within ",
-       "the specified interval. Consider increasing the upper limit of the ",
+       "the specified interval. Try increasing the upper limit of the ",
+       "interval using the 'interval' argument.", call. = FALSE)
+}
+STOP_decrease_limit <- function() {
+  stop("Could not find the simulated survival time for some individuals within ",
+       "the specified interval. Try decreasing the lower limit of the ",
        "interval using the 'interval' argument.", call. = FALSE)
 }
 
