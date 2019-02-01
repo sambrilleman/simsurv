@@ -1,7 +1,15 @@
-### simsurv 0.2.2-9000 (X/X/2018) 
+### simsurv 0.2.3-9000 (X/X/2018) 
  
 Current development version
  
+---
+
+### simsurv 0.2.3 (31/1/2019)
+
+#### New features
+   * The `rootfun` argument has been added. This allows the user to apply any transformation to each side of the root finding equation. The default is `rootfun = log` which corresponds to `uniroot` solving -H(t) - log(u) = 0.
+   * The `rootsolver` argument has been added. This allows the user to choose between stats::uniroot or BB::dfsane for the root finding.
+	 
 ---
 
 ### simsurv 0.2.2 (18/5/2018)

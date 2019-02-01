@@ -97,6 +97,21 @@
 #'   the Gauss-Kronrod quadrature. Can be 7, 11, or 15.
 #' @param interval The interval over which to search for the
 #'   \code{\link{uniroot}} corresponding to each simulated event time.
+#' @param rootsolver Character string specifying the function to use for
+#'   univariate root finding when required. This can currently be
+#'   \code{"uniroot"} for using the \code{\link[stats]{uniroot}} function, or
+#'   \code{"dfsane"} for using the \code{\link[BB]{dfsane}} function.
+#' @param rootfun A function to apply to each side of the root finding equation
+#'   when numerical root finding is used to solve for the simulated event time.
+#'   An appropriate function helps to improve numerical stability. The default
+#'   is to use a log transformation; that is, to solve \eqn{log(S(T)) - log(U) = 0}
+#'   where \eqn{S(T)} is the survival probability at the event time and
+#'   \eqn{U} is a uniform random variate. Suitable alternatives might be to
+#'   specify \code{rootfun = NULL}, which corresponds to \eqn{S(T) - U = 0},
+#'   or \code{rootfun = sqrt}, which corresponds to \eqn{sqrt(S(T)) - sqrt(U) = 0}.
+#'   It is unexpected that the user should need to change this argument from its
+#'   default value, except perhaps in the extreme case that the numerical root
+#'   finding fails.
 #' @param seed The \code{\link[=set.seed]{seed}} to use.
 #' @param ... Other arguments passed to \code{hazard}, \code{loghazard},
 #'   \code{cumhazard}, or \code{logcumhazard}.
@@ -279,15 +294,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
                     cumhazard, logcumhazard,
                     idvar = NULL, ids = NULL, nodes = 15,
                     maxt = NULL, interval = c(1E-8, 500),
+                    rootsolver = c("uniroot", "dfsane"), rootfun = log,
                     seed = sample.int(.Machine$integer.max, 1), ...) {
   set.seed(seed)
   dist <- match.arg(dist)
+  rootsolver <- match.arg(rootsolver)
   if (!is.numeric(interval) || !length(interval) == 2)
     stop("'interval' should a length 2 numeric vector.")
   if (!all(interval >= 0))
     stop("Both 'interval' limits must be non-negative.")
   if (!is.null(maxt) && (interval[2] <= maxt))
     stop("The upper limit of 'interval' must be greater than 'maxt'.")
+  if (is.null(rootfun))
+    rootfun <- function(x) x
+  if (!is.function(rootfun)) {
+    err <- stop("'rootfun' should be NULL or a function.")
+    rootfun <- tryCatch(match.fun(rootfun), error = err)
+  }
+  if (rootsolver == "dfsane") {
+    if (!requireNamespace("BB"))
+      stop("the 'BB' package must be installed to use 'rootsolver = \"dfsane\".")
+  }
+
+  # set defaults for missing arguments
   if (missing(lambdas))
     lambdas <- NULL
   if (missing(gammas))
@@ -304,43 +333,25 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     cumhazard <- NULL
   if (missing(logcumhazard))
     logcumhazard <- NULL
+
+  # flag for a user-defined survival model
   user_defined <- length(c(hazard, loghazard, cumhazard, logcumhazard))
   if (user_defined > 1L)
     stop("Only one of 'hazard', 'loghazard', 'cumhazard' ",
          "or 'logcumhazard' can be specified.")
+
+  # validate the user-defined function
   ok_args <- c("t", "x", "betas")
-  if (!is.null(hazard)) {
-    if (!is.function(hazard))
-      stop("'hazard' should be a function.")
-    nm_args <- names(formals(hazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'hazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
-  if (!is.null(loghazard)) {
-    if (!is.function(loghazard))
-      stop("'loghazard' should be a function.")
-    nm_args <- names(formals(loghazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'loghazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
-  if (!is.null(cumhazard)) {
-    if (!is.function(cumhazard))
-      stop("'cumhazard' should be a function.")
-    nm_args <- names(formals(cumhazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'cumhazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
-  if (!is.null(logcumhazard)) {
-    if (!is.function(logcumhazard))
-      stop("'logcumhazard' should be a function.")
-    nm_args <- names(formals(logcumhazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'logcumhazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
+  if (!is.null(hazard))
+    validate_user_defined_function(hazard, ok_args = ok_args)
+  if (!is.null(loghazard))
+    validate_user_defined_function(loghazard, ok_args = ok_args)
+  if (!is.null(cumhazard))
+    validate_user_defined_function(cumhazard, ok_args = ok_args)
+  if (!is.null(logcumhazard))
+    validate_user_defined_function(logcumhazard, ok_args = ok_args)
+
+  # validate the covariate and parameter arguments
   x <- validate_x(x)
   if (!is.null(betas)) {
     betas <- validate_betas(betas)
@@ -356,6 +367,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
            "columns in the data frame specified in 'x'.")
   }
 
+  # validate the id and idvar arguments
   if (!is.null(ids) == is.null(idvar))
     stop("Both 'idvar' and 'ids' must be supplied together.")
   if (!is.null(ids)) {
@@ -366,6 +378,8 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     N <- nrow(x) # number of individuals
     ids <- seq(N)
   }
+
+  # simulate event times
   if (is.null(hazard) &&
       is.null(loghazard) &&
       is.null(cumhazard) &&
@@ -387,11 +401,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
       tt <- sapply(ids, function(i) {
         x_i <- subset_df(x, i, idvar = idvar)
         betas_i <- subset_df(betas, i, idvar = idvar)
-        log_u_i <- log(stats::runif(1))
+        u_i <- stats::runif(1)
         # check whether S(t) is still greater than random uniform variable u_i at the
         # upper limit of uniroot's interval (otherwise uniroot will return an error)
         at_limit <- rootfn_surv(interval[2], survival = survival, x = x_i,
-                                betas = betas_i, log_u = log_u_i, ...)
+                                betas = betas_i, u = u_i, rootfun = rootfun, ...)
         if (is.nan(at_limit)) {
           STOP_nan_at_limit()
         } else if (at_limit > 0) {
@@ -400,10 +414,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
           } else { # individual will be censored anyway, so just return interval[2]
             return(interval[2])
           }
-        } else {
+        } else if (rootsolver == "uniroot") {
           t_i <- stats::uniroot(
             rootfn_surv, survival = survival, x = x_i, betas = betas_i,
-            log_u = log_u_i, ..., interval = interval)$root
+            u = u_i, rootfun = rootfun, ..., interval = interval,
+            check.conv = TRUE)$root
+        } else if (rootsolver == "dfsane") {
+          K <- 1E-6
+          conv <- 1
+          while (K < 1 && !conv == 0) {
+            t_i <- BB::dfsane(
+              K * interval[2], rootfn_surv, survival = survival, x = x_i,
+              betas = betas_i, u = u_i, rootfun = rootfun, ...,
+              quiet = TRUE, alertConvergence = FALSE,
+              control = list(trace = FALSE))
+            K <- 2 * K
+            conv <- t_i$convergence
+          }
+          if (!conv == 0)
+            stop("Root finding algorithm did not converge. ",
+                 "Try specifying 'rootsolver = \"uniroot\"'.")
+          t_i <- t_i$par
+        } else {
+          stop("Bug found: unknown 'rootsolver'.")
         }
         return(t_i)
       })
@@ -411,7 +444,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
   } else if (is.null(hazard) &&
              is.null(loghazard) &&
              is.null(cumhazard) &&
-             is.null(logcumhazard)) { # # standard parametric with tde
+             is.null(logcumhazard)) { # standard parametric with tde
     if (is.null(tdefunction)) {
       tdefunction <- function(x) x # just returns input value (ie. time)
     } else if (!is.null(tdefunction)) {
@@ -425,12 +458,12 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
-      log_u_i <- log(stats::runif(1))
+      u_i <- stats::runif(1)
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_hazard(interval[2], hazard = hazard, x = x_i,
-                                betas = betas_i, log_u = log_u_i, qq = qq,
-                                tde = tde, tdefunction = tdefunction)
+                                betas = betas_i, u = u_i, rootfun = rootfun,
+                                qq = qq, tde = tde, tdefunction = tdefunction)
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
@@ -439,11 +472,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         } else { # individual will be censored anyway, so just return interval[2]
           return(interval[2])
         }
-      } else {
+      } else if (rootsolver == "uniroot") {
         t_i <- stats::uniroot(
-          rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
-          log_u = log_u_i, qq = qq, tde = tde, tdefunction = tdefunction,
-          interval = interval)$root
+          rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i, u = u_i,
+          rootfun = rootfun, qq = qq, tde = tde, tdefunction = tdefunction,
+          interval = interval, check.conv = TRUE)$root
+      } else if (rootsolver == "dfsane") {
+        K <- 1E-6
+        conv <- 1
+        while (K < 1 && !conv == 0) {
+          t_i <- BB::dfsane(
+            K * interval[2], rootfn_hazard, hazard = hazard, x = x_i,
+            betas = betas_i, u = u_i, rootfun = rootfun, qq = qq,
+            tde = tde, tdefunction = tdefunction, quiet = TRUE,
+            alertConvergence = FALSE, control = list(trace = FALSE))
+          K <- 2 * K
+          conv <- t_i$convergence
+        }
+        if (!conv == 0)
+          stop("Root finding algorithm did not converge. ",
+               "Try specifying 'rootsolver = \"uniroot\"'.")
+        t_i <- t_i$par
+      } else {
+        stop("Bug found: unknown 'rootsolver'.")
       }
       return(t_i)
     })
@@ -459,11 +510,12 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
-      log_u_i <- log(stats::runif(1))
+      u_i <- stats::runif(1)
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_cumhazard(interval[2], cumhazard = cumhazard, x = x_i,
-                                   betas = betas_i, log_u = log_u_i, ...)
+                                   betas = betas_i, u = u_i, rootfun = rootfun,
+                                   ...)
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
@@ -472,10 +524,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         } else { # individual will be censored anyway, so just return interval[2]
           return(interval[2])
         }
-      } else {
+      } else if (rootsolver == "uniroot") {
         t_i <- stats::uniroot(
           rootfn_cumhazard, cumhazard = cumhazard, x = x_i, betas = betas_i,
-          log_u = log_u_i, ..., interval = interval)$root
+          u = u_i, rootfun = rootfun, ..., interval = interval,
+          check.conv = TRUE)$root
+      } else if (rootsolver == "dfsane") {
+        K <- 1E-6
+        conv <- 1
+        while (K < 1 && !conv == 0) {
+          t_i <- BB::dfsane(
+            K * interval[2], rootfn_cumhazard, cumhazard = cumhazard,
+            x = x_i, betas = betas_i, u = u_i, rootfun = rootfun,
+            ..., quiet = TRUE, alertConvergence = FALSE,
+            control = list(trace = FALSE))
+          K <- 2 * K
+          conv <- t_i$convergence
+        }
+        if (!conv == 0)
+          stop("Root finding algorithm did not converge. ",
+               "Try specifying 'rootsolver = \"uniroot\"'.")
+        t_i <- t_i$par
+      } else {
+        stop("Bug found: unknown 'rootsolver'.")
       }
       return(t_i)
     })
@@ -491,11 +562,12 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     tt <- sapply(ids, function(i) {
       x_i <- subset_df(x, i, idvar = idvar)
       betas_i <- subset_df(betas, i, idvar = idvar)
-      log_u_i <- log(stats::runif(1))
+      u_i <- stats::runif(1)
       # check whether S(t) is still greater than random uniform variable u_i at the
       # upper limit of uniroot's interval (otherwise uniroot will return an error)
       at_limit <- rootfn_hazard(interval[2], hazard = hazard, x = x_i,
-                                betas = betas_i, log_u = log_u_i, qq = qq, ...)
+                                betas = betas_i, u = u_i, rootfun = rootfun,
+                                qq = qq, ...)
       if (is.nan(at_limit)) {
         STOP_nan_at_limit()
       } else if (at_limit > 0) {
@@ -504,10 +576,29 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
         } else { # individual will be censored anyway, so just return interval[2]
           return(interval[2])
         }
-      } else {
+      } else if (rootsolver == "uniroot") {
         t_i <- stats::uniroot(
           rootfn_hazard, hazard = hazard, x = x_i, betas = betas_i,
-          log_u = log_u_i, qq = qq, ..., interval = interval)$root
+          u = u_i, rootfun = rootfun, qq = qq, ..., interval = interval,
+          check.conv = TRUE)$root
+      } else if (rootsolver == "dfsane") {
+        K <- 1E-6
+        conv <- 1
+        while (K < 1 && !conv == 0) {
+          t_i <- suppressWarnings(BB::dfsane(
+            K * interval[2], rootfn_hazard, hazard = hazard, x = x_i,
+            betas = betas_i, u = u_i, rootfun = rootfun, qq = qq,
+            ..., quiet = TRUE, alertConvergence = FALSE,
+            control = list(trace = FALSE)))
+          K <- 2 * K
+          conv <- t_i$convergence
+        }
+        if (!conv == 0)
+          stop("Root finding algorithm did not converge. ",
+               "Try specifying 'rootsolver = \"uniroot\"'.")
+        t_i <- t_i$par
+      } else {
+        stop("Bug found: unknown 'rootsolver'.")
       }
       return(t_i)
     })
@@ -530,6 +621,21 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
 
 
 #----------- internal
+
+# Validate the user-defined hazard/log hazard/etc function
+#
+# @param f The user-defined hazard, cum hazard, log hazard, or log cum hazard.
+# @param ok_args A character vector with the names of the required arguments.
+# @return Nothing
+validate_user_defined_function <- function(f, ok_args) {
+  nm <- deparse(substitute(f))
+  if (!is.function(f))
+    stop("'", nm, "' should be a function.")
+  nm_args <- names(formals(f))
+  if (!all(ok_args %in% nm_args))
+    stop("'", nm, "' function should have the following named arguments: ",
+         paste(ok_args, collapse = ", "))
+}
 
 # Return the inverted survival function, rearranged to solve for t
 #
@@ -764,19 +870,22 @@ validate_gammas <- function(gammas = NULL, dist, mixture) {
 #   betas, ...
 # @param x Vector of covariate data to be supplied to hazard.
 # @param betas Vector of parameter values to be supplied to hazard.
+# @param u A uniform random variate.
+# @param rootfun A transformation function to apply to each side of the root
+#   finding equation.
 # @param qq The standardised quadpoints and quadweights returned by a call to
 #   get_quadpoints.
 # @param ... Further arguments passed to hazard.
 rootfn_hazard <- function(t, hazard, x = NULL, betas = NULL,
-                          log_u = log(stats::runif(1)),
+                          u = stats::runif(1), rootfun,
                           qq = get_quadpoints(nodes = 15), ...) {
   qpts <- unstandardise_quadpoints(qq$points, 0, t)
   qwts <- unstandardise_quadweights(qq$weights, 0, t)
   cumhaz <- sum(unlist(lapply(1:length(qpts), function(q) {
     qwts[[q]] * hazard(t = qpts[[q]], x = x, betas = betas, ...)
   })))
-  logsurv <- -cumhaz
-  return_finite(logsurv - log_u)
+  surv <- exp(-cumhaz)
+  return_finite(rootfun(surv) - rootfun(u))
 }
 
 # Function for calculating the survival probability at time t minus a
@@ -789,12 +898,15 @@ rootfn_hazard <- function(t, hazard, x = NULL, betas = NULL,
 #   arguments x, betas, aux
 # @param x Vector of covariate data to be supplied to cumhazard.
 # @param betas Vector of parameter values to be supplied to cumhazard.
+# @param u A uniform random variate.
+# @param rootfun A transformation function to apply to each side of the root
+#   finding equation.
 # @param ... Further arguments passed to cumhazard.
 rootfn_cumhazard <- function(t, cumhazard, x = NULL, betas = NULL,
-                             log_u = log(stats::runif(1)), ...) {
+                             u = stats::runif(1), rootfun, ...) {
   cumhaz <- cumhazard(t = t, x = x, betas = betas, ...)
-  logsurv <- -cumhaz
-  return_finite(logsurv - log_u)
+  surv <- exp(-cumhaz)
+  return_finite(rootfun(surv) - rootfun(u))
 }
 
 # Function for calculating the survival probability at time t minus a
@@ -806,12 +918,14 @@ rootfn_cumhazard <- function(t, cumhazard, x = NULL, betas = NULL,
 # @param survival The survival function, with named arguments x, betas, aux
 # @param x Vector of covariate data to be supplied to survival.
 # @param betas Vector of parameter values to be supplied to survival.
+# @param u A uniform random variate.
+# @param rootfun A transformation function to apply to each side of the root
+#   finding equation.
 # @param ... Further arguments passed to survival.
 rootfn_surv <- function(t, survival, x = NULL, betas = NULL,
-                        log_u = log(stats::runif(1)), ...) {
+                        u = stats::runif(1), rootfun, ...) {
   surv <- survival(t = t, x = x, betas = betas, ...)
-  logsurv <- log(surv)
-  return_finite(logsurv - log_u)
+  return_finite(rootfun(surv) - rootfun(u))
 }
 
 # Check that x is either NULL or a data frame
@@ -904,7 +1018,12 @@ STOP_nan_at_limit <- function() {
 }
 STOP_increase_limit <- function() {
   stop("Could not find the simulated survival time for some individuals within ",
-       "the specified interval. Consider increasing the upper limit of the ",
+       "the specified interval. Try increasing the upper limit of the ",
+       "interval using the 'interval' argument.", call. = FALSE)
+}
+STOP_decrease_limit <- function() {
+  stop("Could not find the simulated survival time for some individuals within ",
+       "the specified interval. Try decreasing the lower limit of the ",
        "interval using the 'interval' argument.", call. = FALSE)
 }
 
