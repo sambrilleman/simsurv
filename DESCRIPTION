@@ -1,8 +1,8 @@
 Package: simsurv
 Type: Package
 Title: Simulate Survival Data
-Version: 0.2.2-9000
-Date: 2018-05-18
+Version: 0.2.3
+Date: 2019-01-02
 Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@monash.edu", 
                     role = c("cre", "aut", "cph")),
              person("Alessandro", "Gasparini", email = "ag475@leicester.ac.uk", 
@@ -32,7 +32,6 @@ Imports:
     methods,
     stats
 Suggests:
-    BB (>= 2014.10.1),
     eha (>= 2.4.5),
     flexsurv (>= 1.1.0),
     knitr (>= 1.15.1),
@@ -43,4 +42,4 @@ Suggests:
 VignetteBuilder: knitr
 LazyData: true
 BugReports: https://github.com/sambrilleman/simsurv/issues
-RoxygenNote: 6.1.0
+RoxygenNote: 6.0.1
