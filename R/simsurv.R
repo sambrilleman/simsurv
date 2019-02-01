@@ -112,9 +112,6 @@
 #'   It is unexpected that the user should need to change this argument from its
 #'   default value, except perhaps in the extreme case that the numerical root
 #'   finding fails.
-#' @param init A positive scalar specifying the initial value for the univariate
-#'   root finding algorithm. This is only relevant when root finding is being
-#'   used and \code{rootsolver = "dfsane"}.
 #' @param seed The \code{\link[=set.seed]{seed}} to use.
 #' @param ... Other arguments passed to \code{hazard}, \code{loghazard},
 #'   \code{cumhazard}, or \code{logcumhazard}.
@@ -318,6 +315,8 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     if (!requireNamespace("BB"))
       stop("the 'BB' package must be installed to use 'rootsolver = \"dfsane\".")
   }
+
+  # set defaults for missing arguments
   if (missing(lambdas))
     lambdas <- NULL
   if (missing(gammas))
@@ -334,43 +333,25 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     cumhazard <- NULL
   if (missing(logcumhazard))
     logcumhazard <- NULL
+
+  # flag for a user-defined survival model
   user_defined <- length(c(hazard, loghazard, cumhazard, logcumhazard))
   if (user_defined > 1L)
     stop("Only one of 'hazard', 'loghazard', 'cumhazard' ",
          "or 'logcumhazard' can be specified.")
+
+  # validate the user-defined function
   ok_args <- c("t", "x", "betas")
-  if (!is.null(hazard)) {
-    if (!is.function(hazard))
-      stop("'hazard' should be a function.")
-    nm_args <- names(formals(hazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'hazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
-  if (!is.null(loghazard)) {
-    if (!is.function(loghazard))
-      stop("'loghazard' should be a function.")
-    nm_args <- names(formals(loghazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'loghazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
-  if (!is.null(cumhazard)) {
-    if (!is.function(cumhazard))
-      stop("'cumhazard' should be a function.")
-    nm_args <- names(formals(cumhazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'cumhazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
-  if (!is.null(logcumhazard)) {
-    if (!is.function(logcumhazard))
-      stop("'logcumhazard' should be a function.")
-    nm_args <- names(formals(logcumhazard))
-    if (!all(ok_args %in% nm_args))
-      stop("'logcumhazard' function should have the following named arguments: ",
-           paste(ok_args, collapse = ", "))
-  }
+  if (!is.null(hazard))
+    validate_user_defined_function(hazard, ok_args = ok_args)
+  if (!is.null(loghazard))
+    validate_user_defined_function(loghazard, ok_args = ok_args)
+  if (!is.null(cumhazard))
+    validate_user_defined_function(cumhazard, ok_args = ok_args)
+  if (!is.null(logcumhazard))
+    validate_user_defined_function(logcumhazard, ok_args = ok_args)
+
+  # validate the covariate and parameter arguments
   x <- validate_x(x)
   if (!is.null(betas)) {
     betas <- validate_betas(betas)
@@ -386,6 +367,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
            "columns in the data frame specified in 'x'.")
   }
 
+  # validate the id and idvar arguments
   if (!is.null(ids) == is.null(idvar))
     stop("Both 'idvar' and 'ids' must be supplied together.")
   if (!is.null(ids)) {
@@ -396,6 +378,8 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     N <- nrow(x) # number of individuals
     ids <- seq(N)
   }
+
+  # simulate event times
   if (is.null(hazard) &&
       is.null(loghazard) &&
       is.null(cumhazard) &&
@@ -460,7 +444,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
   } else if (is.null(hazard) &&
              is.null(loghazard) &&
              is.null(cumhazard) &&
-             is.null(logcumhazard)) { # # standard parametric with tde
+             is.null(logcumhazard)) { # standard parametric with tde
     if (is.null(tdefunction)) {
       tdefunction <- function(x) x # just returns input value (ie. time)
     } else if (!is.null(tdefunction)) {
@@ -637,6 +621,21 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
 
 
 #----------- internal
+
+# Validate the user-defined hazard/log hazard/etc function
+#
+# @param f The user-defined hazard, cum hazard, log hazard, or log cum hazard.
+# @param ok_args A character vector with the names of the required arguments.
+# @return Nothing
+validate_user_defined_function <- function(f, ok_args) {
+  nm <- deparse(substitute(f))
+  if (!is.function(f))
+    stop("'", nm, "' should be a function.")
+  nm_args <- names(formals(f))
+  if (!all(ok_args %in% nm_args))
+    stop("'", nm, "' function should have the following named arguments: ",
+         paste(ok_args, collapse = ", "))
+}
 
 # Return the inverted survival function, rearranged to solve for t
 #

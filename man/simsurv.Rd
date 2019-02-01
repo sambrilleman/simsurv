@@ -141,10 +141,6 @@ finding fails.}
 
 \item{...}{Other arguments passed to \code{hazard}, \code{loghazard},
 \code{cumhazard}, or \code{logcumhazard}.}
-
-\item{init}{A positive scalar specifying the initial value for the univariate
-root finding algorithm. This is only relevant when root finding is being
-used and \code{rootsolver = "dfsane"}.}
 }
 \value{
 A data frame with a row for each individual, and the following three
