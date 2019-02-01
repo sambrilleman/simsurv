@@ -46,7 +46,7 @@
 #'   to create time dependent effects (i.e. non-proportional hazards). The
 #'   values specified in \code{tde} are used as coefficients (in the linear
 #'   predictor of the proportional hazards model) on an interaction term between
-#'   the correponding covariate and time (or some function of time, for example
+#'   the corresponding covariate and time (or some function of time, for example
 #'   log time, if \code{tdefunction} is not \code{NULL}).
 #' @param tdefunction An optional function of time to which covariates specified
 #'   in \code{tde} will be interacted, in order to generate time dependent

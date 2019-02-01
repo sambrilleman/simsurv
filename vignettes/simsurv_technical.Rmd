@@ -65,11 +65,11 @@ $$
   T_i^s = S_i^{-1}(U_i)
 $$
 
-where $T_i^s$ is the simulated event times for individual $i$, $S_i^{-1}(u)$ is the inverted survival function defined previously, and $U_i$ is a random variable drawn from a $U(0,1)$ distribution. Note that if the cumulative baseline hazard is directly invertible then an analytic form will be available for $S_i^{-1}(u)$. That is, we can just plug in random draws of $U_i$ and directly calcuate the simulated event times. Since independent draws of a $U(0,1)$ random variable are easily obtained using any standard statistical software, this method will be easy and fast for simulating event times. 
+where $T_i^s$ is the simulated event times for individual $i$, $S_i^{-1}(u)$ is the inverted survival function defined previously, and $U_i$ is a random variable drawn from a $U(0,1)$ distribution. Note that if the cumulative baseline hazard is directly invertible then an analytic form will be available for $S_i^{-1}(u)$. That is, we can just plug in random draws of $U_i$ and directly calculate the simulated event times. Since independent draws of a $U(0,1)$ random variable are easily obtained using any standard statistical software, this method will be easy and fast for simulating event times. 
 
 This method was first proposed by Bender et al. (2005) and is commonly known as the *cumulative hazard inversion method*.
 
-For the standard parameteric survival distributions included in the **simsurv** package (i.e. Weibull, exponential, Gompertz) an analytic form for $S_i^{-1}(u)$ does exist. Therefore, event times for these standard parametric distributions (assuming proportional hazards) are generated using the cumulative hazard inversion method. The parameterisations for each of these standard parametric distributions are shown next.
+For the standard parametric survival distributions included in the **simsurv** package (i.e. Weibull, exponential, Gompertz) an analytic form for $S_i^{-1}(u)$ does exist. Therefore, event times for these standard parametric distributions (assuming proportional hazards) are generated using the cumulative hazard inversion method. The parameterisations for each of these standard parametric distributions are shown next.
 
 ### Exponential distribution
 

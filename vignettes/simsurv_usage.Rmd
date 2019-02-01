@@ -168,7 +168,7 @@ logcumhaz <- function(t, x, betas, knots) {
 Next, we will show how to use the `simsurv` function to simulate event times under the flexible parametric model. To demonstrate this, we will again generate the event times as part of a simulation study. The objective of the simulation study will be to assess the bias and coverage of the estimated log hazard ratio for hormone therapy. This will be achieved by: 
 
 * generating 100 simulated datasets (ideally it should be more than 100 datasets, but we don't want the vignette to take forever to build!), each containing $N = 200$ individuals. The simulated event times will be generated under our flexible parametric model (with the "true" parameter values taken from fitting a model to the German breast cancer data);
-* fitting both a Weibull model and a flexible parameteric model to each simulated dataset; 
+* fitting both a Weibull model and a flexible parametric model to each simulated dataset; 
 * calculating the mean bias (across the 100 simulated datasets) in the log hazard ratio for hormone therapy under the Weibull model and the flexible parametric models. 
 
 ```{r, example2}
