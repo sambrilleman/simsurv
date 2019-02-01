@@ -32,7 +32,7 @@ Imports:
     methods,
     stats
 Suggests:
-    BB (> 2014.10.1),
+    BB (>= 2014.10.1),
     eha (>= 2.4.5),
     flexsurv (>= 1.1.0),
     knitr (>= 1.15.1),
