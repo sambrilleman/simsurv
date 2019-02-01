@@ -1,7 +1,7 @@
 ## Release summary
 
 ## Test environments
-* local Windows install, R 3.5.1
+* local Windows install, R 3.5.2
 * win-builder (R-release, R-devel)
 * r-hub builder (Debian Linux, R-devel, GCC)
 
