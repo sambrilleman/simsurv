@@ -93,7 +93,7 @@ $$
   \right)
 $$
 
-where $\lambda > 0$ is the rate parameter.
+where $\lambda > 0$ is the scale (sometimes known as rate) parameter.
 
 ### Weibull distribution
 
@@ -145,7 +145,7 @@ $$
   \right]  
 $$
 
-where $\lambda > 0$ and $\gamma > 0$ are the shape and scale parameters, respectively. 
+where $\lambda > 0$ and $\gamma > 0$ are the scale and shape parameters, respectively. 
 
 ## Numerical root finding
 
@@ -189,7 +189,7 @@ $$
   ^ {\exp(X_i^T \beta)}
 $$
 
-where $\lambda_1 > 0$ and $\lambda_2 > 0$ are the rate parameters for the component exponential distributions.
+where $\lambda_1 > 0$ and $\lambda_2 > 0$ are the scale (sometimes known as rate) parameters for the component exponential distributions.
 
 ### Weibull mixture distribution
 
@@ -263,6 +263,8 @@ $$
   \right] 
   ^ {\exp(X_i^T \beta)}
 $$
+
+where $\lambda_1 > 0$ and $\lambda_2 > 0$ are the scale parameters, and $\gamma_1 > 0$ and $\gamma_2 > 0$ are the shape parameters, for the component Gompertz distributions.
 
 ## Extending to time-dependent effects or user-defined hazard functions
 
