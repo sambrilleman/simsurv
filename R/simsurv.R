@@ -152,22 +152,64 @@
 #' complex models such as joint longitudinal and survival models; the
 #' \strong{Examples} section provides an example of this.
 #'
-#' \subsection{Parameterisations for the Weibull distribution}{
-#' For the exponential and Weibull distributions, with scale parameter
-#' \eqn{lambda} and shape parameter \eqn{gamma} (with \eqn{gamma} fixed equal
-#' to 1 for the exponential distribution) the baseline hazard and survival
+#' \subsection{Parameterisation for the exponential distribution}{
+#' For the exponential distribution, with scale parameter
+#' \eqn{\lambda > 0}, the baseline hazard and survival
 #' functions used by \code{simsurv} are:
-#' \eqn{h(t) = \gamma \lambda t ^ {\gamma - 1}} and
-#' \eqn{S(t) = \exp(-\lambda t ^ {\gamma})}.
+#' \eqn{h(t) = \lambda} and
+#' \eqn{S(t) = \exp(-\lambda)}.
 #'
-#' Note that this parameterisation differs from the one used by
-#' \code{\link{dweibull}} or the \code{\link[eha]{phreg}} modelling
-#' function in the \pkg{eha} package. The parameterisation used in those
+#' Our parameterisation is equivalent to the one used by Wikipedia, the
+#' \code{\link{dexp}} function, the \pkg{eha} package, and the \pkg{flexsurv}
+#' package, except what we call the scale parameter
+#' they call the rate parameter.
+#' }
+#'
+#' \subsection{Parameterisation for the Weibull distribution}{
+#' For the Weibull distribution, with shape parameter \eqn{\gamma > 0}
+#' and scale parameter \eqn{\lambda > 0}, the baseline
+#' hazard and survival functions used by \code{simsurv} are:
+#' \eqn{h(t) = \gamma \lambda t ^ {\gamma - 1}} and
+#' \eqn{S(t) = \exp(-\lambda t ^ {\gamma})}. Setting \eqn{\gamma} equal
+#' to 1 leads to the exponential distribution as a special case.
+#'
+#' Our parameterisation differs from the one used by Wikipedia,
+#' \code{\link{dweibull}}, the \code{\link[eha]{phreg}} modelling
+#' function in the \pkg{eha} package, and the
+#' \code{\link[flexsurv]{flexsurvreg}} modelling function in the
+#' \pkg{flexsurv} package. The parameterisation used in those
 #' functions can be achieved by transforming the scale parameter via the
 #' relationship \eqn{b = \lambda ^ {\frac{-1}{\gamma}}}, or equivalently
 #' \eqn{\lambda = b ^ {-\gamma}} where \eqn{b} is the scale parameter under
-#' the parameterisation of the Weibull distribution used by
-#' \code{\link{dweibull}} or \code{\link[eha]{phreg}}.
+#' their parameterisation of the Weibull distribution.
+#' }
+#'
+#' \subsection{Parameterisation for the Gompertz distribution}{
+#' For the Gompertz distribution, with  and shape parameter \eqn{\gamma > 0}
+#' and scale parameter \eqn{\lambda > 0}, the baseline
+#' hazard and survival functions used by \code{simsurv} are:
+#' \eqn{h(t) = \lambda \exp(\gamma t)} and
+#' \eqn{S(t) = \exp(\frac{-\lambda (\exp(\gamma t) - 1)}{\gamma})}.
+#' Setting \eqn{\gamma} equal to 0 leads to the exponential distribution
+#' as a special case.
+#'
+#' Our parameterisation is equivalent to the one used by the
+#' \code{\link[flexsurv]{dgompertz}} and \code{\link[flexsurv]{flexsurvreg}}
+#' functions in the \pkg{flexsurv} package, except they use slightly different
+#' terminology. Their parameterisation can be achieved via the relationship
+#' \eqn{a = \gamma} and \eqn{b = \lambda} where \eqn{a} and \eqn{b} are their
+#' shape and rate parameters, respectively.
+#'
+#' Our parameterisation differs from the one used in the
+#' \code{\link[eha]{dgompertz}} and \code{\link[eha]{phreg}} functions
+#' in the \pkg{eha} package. Their parameterisation can be achieved via
+#' the relationship \eqn{a = \lambda} and \eqn{b = \frac{1}{\gamma}} where
+#' \eqn{a} and \eqn{b} are their shape and scale parameters, respectively.
+#'
+#' Our parameterisation differs from the one used by Wikipedia.
+#' Their parameterisation can be achieved via the relationship
+#' \eqn{a = \frac{\lambda}{\gamma}} and \eqn{b = \gamma} where
+#' \eqn{a} and \eqn{b} are their shape and scale parameters, respectively.
 #' }
 #'
 #' @note This package is modelled on the user-written \code{survsim} package
@@ -176,7 +218,7 @@
 #' @return A data frame with a row for each individual, and the following three
 #'   columns:
 #'   \itemize{
-#'     \item \code{id}  The individual identifier
+#'     \item \code{id} The individual identifier
 #'     \item \code{eventtime} The simulated event (or censoring) time
 #'     \item \code{status} The event indicator, 1 for failure, 0 for censored
 #'   }
