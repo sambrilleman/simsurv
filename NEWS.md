@@ -1,16 +1,17 @@
-### simsurv 0.2.3-9000 (X/X/2019) 
+### simsurv 0.2.4-9000 (X/X/2019) 
  
 Current development version
  
  
 ---
 
-### simsurv 0.2.4 (X/X/2019)
+### simsurv 0.2.4 (6/2/2019)
 
 #### New features
+   * Allow negative shape parameters for the Gompertz distribution (note that this can lead to infinite survival times, in which case the survival time is set to 'Inf' and a warning is printed).
 
 #### Bug fixes
-   * The simsurv function documentation and the technical vignette have both been updated to better clarify the parameterisations for the parametric distributions.
+   * The simsurv() function documentation and the technical vignette have been updated to better clarify the parameterisations for the parametric distributions.
 	 
 ---
 
