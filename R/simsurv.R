@@ -651,6 +651,11 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     d <- as.integer(tt < maxt)
     tt <- tt * d + maxt * (1 - d)
   } else {
+    n <- sum(is.infinite(tt))
+    if (n > 0)
+      warning("There were ", n, " event times evaluated at infinity (likely ",
+              "due to the hazard approaching zero). Perhaps consider ",
+              "specifying a finite censoring time using the 'maxt' argument.")
     d <- rep(1, N)
   }
   ret <- data.frame(id = if (!is.null(ids)) ids else seq(N),
@@ -706,7 +711,10 @@ get_inverted_surv <- function(dist = c("weibull", "exponential", "gompertz"),
     inv_surv <- function(u, x, betas) {
       eta <- if (!is.null(betas))
         sum(sapply(names(betas), function(i) betas[[i]] * x[[i]])) else 0L
-      t <- (1 / gammas[1L]) * log(((-gammas[1L]*log(u)) / (lambdas[1L]*exp(eta))) + 1)
+      check <- ((-gammas[1L]*log(u)) / (lambdas[1L]*exp(eta))) + 1
+      if (check < 0)
+        return(Inf)
+      t <- (1 / gammas[1L]) * log(check)
       return(t)
     }
   }
@@ -896,7 +904,7 @@ validate_gammas <- function(gammas = NULL, dist, mixture) {
     } else if (!mixture && (!length(gammas) == 1L)) {
       stop("'gammas' should be length 1.", call. = FALSE)
     }
-    if (any(gammas < 0))
+    if ((dist == "weibull") && any(gammas < 0))
       stop("'gammas' should be positive.", call. = FALSE)
   }
 }
@@ -1061,7 +1069,11 @@ STOP_nan_at_limit <- function() {
 STOP_increase_limit <- function() {
   stop("Could not find the simulated survival time for some individuals within ",
        "the specified interval. Try increasing the upper limit of the ",
-       "interval using the 'interval' argument.", call. = FALSE)
+       "interval using the 'interval' argument. If that doesn't work, then ",
+       "it may be because the hazard is approaching zero and leading to ",
+       "numerical underflow (ie. infinite survival times), in which case you ",
+       "must specify a finite censoring time using the 'maxt' argument.",
+       call. = FALSE)
 }
 STOP_decrease_limit <- function() {
   stop("Could not find the simulated survival time for some individuals within ",
