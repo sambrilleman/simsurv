@@ -2,6 +2,16 @@
  
 Current development version
  
+ 
+---
+
+### simsurv 0.2.4 (X/X/2019)
+
+#### New features
+
+#### Bug fixes
+   * The simsurv function documentation and the technical vignette have both been updated to better clarify the parameterisations for the parametric distributions.
+	 
 ---
 
 ### simsurv 0.2.3 (1/2/2019)
