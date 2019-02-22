@@ -1,8 +1,14 @@
-### simsurv 0.2.4-9000 (X/X/2019) 
+### simsurv 0.2.5-9000 (X/X/2019) 
  
 Current development version
  
+---
+
+### simsurv 0.2.5 (22/2/2019)
  
+#### Bug fixes
+   * Fix bug where infinite survival time were incorrectly returned as NaN (due to: Inf * d = NaN when d = 0 is for a censored individual)
+
 ---
 
 ### simsurv 0.2.4 (6/2/2019)
