@@ -649,7 +649,7 @@ simsurv <- function(dist = c("weibull", "exponential", "gompertz"),
     if (maxt <= 0)
       stop("'maxt' must be positive.")
     d <- as.integer(tt < maxt)
-    tt <- tt * d + maxt * (1 - d)
+    tt[d == 0] <- maxt # censored individuals
   } else {
     n <- sum(is.infinite(tt))
     if (n > 0)
