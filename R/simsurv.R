@@ -244,7 +244,7 @@
 #'
 #'   Crowther MJ, and Lambert PC. (2012) Simulating complex survival data.
 #'   \emph{The Stata Journal} \strong{12}(4), 674--687.
-#'   \url{http://www.stata-journal.com/sjpdf.html?articlenum=st0275}
+#'   \url{https://www.stata-journal.com/sjpdf.html?articlenum=st0275}
 #'
 #' @examples
 #'   #-------------- Simpler examples
