@@ -1,7 +1,8 @@
-### simsurv 0.2.5-9000 (X/X/2019) 
+### simsurv 1.0.0 (9/1/2021)
  
-Current development version
- 
+#### New features
+   * Version number bumped to 1.0.0 to correspond to publication of JSS paper.
+
 ---
 
 ### simsurv 0.2.5 (22/2/2019)

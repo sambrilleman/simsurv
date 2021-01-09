@@ -223,9 +223,14 @@
 #'     \item \code{status} The event indicator, 1 for failure, 0 for censored
 #'   }
 #'
-#' @author Sam Brilleman (\email{sam.brilleman@@monash.edu})
+#' @author Sam Brilleman (\email{sam.brilleman@@gmail.com})
 #'
 #' @references
+#'   Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. (2020)
+#'   Simulating survival data using the simsurv R package. \emph{Journal
+#'   of Statistical Software} \strong{96}(9), 1--27.
+#'   \doi{10.18637/jss.v097.i03}.
+#'
 #'   Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
 #'   complex survival data. \emph{Statistics in Medicine} \strong{32},
 #'   4118--4134. \doi{10.1002/sim.5823}
