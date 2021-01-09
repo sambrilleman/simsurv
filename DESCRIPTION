@@ -7,7 +7,7 @@ Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@gmail.com",
                     role = c("cre", "aut", "cph")),
              person("Alessandro", "Gasparini", email = "ag475@leicester.ac.uk",
                     role = "ctb"))
-Maintainer: Sam Brilleman <sam.brilleman@monash.edu>
+Maintainer: Sam Brilleman <sam.brilleman@gmail.com>
 Description: Simulate survival times from standard parametric survival
     distributions (exponential, Weibull, Gompertz), 2-component mixture
     distributions, or a user-defined hazard, log hazard, cumulative hazard,
@@ -44,4 +44,4 @@ Suggests:
 VignetteBuilder: knitr
 LazyData: true
 BugReports: https://github.com/sambrilleman/simsurv/issues
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
