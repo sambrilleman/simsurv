@@ -24,7 +24,7 @@ Description: Simulate survival times from standard parametric survival
     For details see the supporting paper <doi:10.18637/jss.v097.i03>.
     Note that this package is modelled on the 'survsim' package available in
     the 'Stata' software (see Crowther and Lambert (2012)
-    <http://www.stata-journal.com/sjpdf.html?articlenum=st0275> or
+    <https://www.stata-journal.com/sjpdf.html?articlenum=st0275> or
     Crowther and Lambert (2013) <doi:10.1002/sim.5823>).
 License: GPL (>=3) | file LICENSE
 Depends:
