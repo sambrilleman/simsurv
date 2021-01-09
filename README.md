@@ -169,10 +169,12 @@ If you find any bugs, please [file an issue on GitHub](https://github.com/sambri
 References
 ----------
 
-1.  Crowther MJ, and Lambert PC. Simulating biologically plausible complex survival data. *Statistics in Medicine* 2013; **32**, 4118--4134. <doi:10.1002/sim.5823>
+1.  Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. Simulating survival data using the simsurv R package. *Journal of Statistical Software* 2020; **96**(9), 1--27. <doi:10.18637/jss.v096.i09>
 
-2.  Bender R, Augustin T, and Blettner M. Generating survival times to simulate Cox proportional hazards models. *Statistics in Medicine* 2005; **24(11)**, 1713--1723.
+2.  Crowther MJ, and Lambert PC. Simulating biologically plausible complex survival data. *Statistics in Medicine* 2013; **32**, 4118--4134. <doi:10.1002/sim.5823>
 
-3.  Brent R. (1973) *Algorithms for Minimization without Derivatives*. Englewood Cliffs, NJ: Prentice-Hall.
+3.  Bender R, Augustin T, and Blettner M. Generating survival times to simulate Cox proportional hazards models. *Statistics in Medicine* 2005; **24(11)**, 1713--1723.
 
-4.  Crowther MJ, and Lambert PC. Simulating complex survival data. *The Stata Journal* 2012; **12**(4), 674--687. <http://www.stata-journal.com/sjpdf.html?articlenum=st0275>
+4.  Brent R. (1973) *Algorithms for Minimization without Derivatives*. Englewood Cliffs, NJ: Prentice-Hall.
+
+5.  Crowther MJ, and Lambert PC. Simulating complex survival data. *The Stata Journal* 2012; **12**(4), 674--687. <http://www.stata-journal.com/sjpdf.html?articlenum=st0275>
