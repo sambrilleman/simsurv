@@ -229,7 +229,7 @@
 #'   Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. (2020)
 #'   Simulating survival data using the simsurv R package. \emph{Journal
 #'   of Statistical Software} \strong{96}(9), 1--27.
-#'   \doi{10.18637/jss.v096.i09}.
+#'   \doi{10.18637/jss.v097.i03}.
 #'
 #'   Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
 #'   complex survival data. \emph{Statistics in Medicine} \strong{32},

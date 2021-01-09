@@ -11,10 +11,10 @@ bibentry(bibtype = "Article",
                           family = "Crowther")),
   journal      = "Journal of Statistical Software",
   year         = "2020",
-  volume       = "96",
-  number       = "9",
+  volume       = "97",
+  number       = "3",
   pages        = "1--27",
-  doi          = "10.18637/jss.v096.i09",
+  doi          = "10.18637/jss.v097.i03",
 
   header       = "To cite simsurv in publications use:"
 )

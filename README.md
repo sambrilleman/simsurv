@@ -169,7 +169,7 @@ If you find any bugs, please [file an issue on GitHub](https://github.com/sambri
 References
 ----------
 
-1.  Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. Simulating survival data using the simsurv R package. *Journal of Statistical Software* 2020; **96**(9), 1--27. <doi:10.18637/jss.v096.i09>
+1.  Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. Simulating survival data using the simsurv R package. *Journal of Statistical Software* 2020; **96**(9), 1--27. <doi:10.18637/jss.v097.i03>
 
 2.  Crowther MJ, and Lambert PC. Simulating biologically plausible complex survival data. *Statistics in Medicine* 2013; **32**, 4118--4134. <doi:10.1002/sim.5823>
 
