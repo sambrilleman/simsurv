@@ -1,9 +1,10 @@
 ## Release summary
 
 ## Test environments
-* local Windows install, R 3.5.2
+* local Windows install, R 4.0.3
 * win-builder (R-release, R-devel)
-* r-hub builder (Debian Linux, R-devel, GCC)
+
+Not checked on r-hub builder (Debian Linux, R-devel, GCC) since site appeared to be down or crashing; after uploading no build got initiated.
 
 ## R CMD check results
 
