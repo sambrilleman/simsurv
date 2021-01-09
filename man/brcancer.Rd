@@ -4,7 +4,9 @@
 \name{brcancer}
 \alias{brcancer}
 \title{German breast cancer dataset}
-\format{A data frame with 686 rows and 4 variables.}
+\format{
+A data frame with 686 rows and 4 variables.
+}
 \usage{
 brcancer
 }

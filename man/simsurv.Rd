@@ -4,12 +4,30 @@
 \alias{simsurv}
 \title{Simulate survival data}
 \usage{
-simsurv(dist = c("weibull", "exponential", "gompertz"), lambdas, gammas, x,
-  betas, tde, tdefunction = NULL, mixture = FALSE, pmix = 0.5, hazard,
-  loghazard, cumhazard, logcumhazard, idvar = NULL, ids = NULL,
-  nodes = 15, maxt = NULL, interval = c(1e-08, 500),
-  rootsolver = c("uniroot", "dfsane"), rootfun = log,
-  seed = sample.int(.Machine$integer.max, 1), ...)
+simsurv(
+  dist = c("weibull", "exponential", "gompertz"),
+  lambdas,
+  gammas,
+  x,
+  betas,
+  tde,
+  tdefunction = NULL,
+  mixture = FALSE,
+  pmix = 0.5,
+  hazard,
+  loghazard,
+  cumhazard,
+  logcumhazard,
+  idvar = NULL,
+  ids = NULL,
+  nodes = 15,
+  maxt = NULL,
+  interval = c(1e-08, 500),
+  rootsolver = c("uniroot", "dfsane"),
+  rootfun = log,
+  seed = sample.int(.Machine$integer.max, 1),
+  ...
+)
 }
 \arguments{
 \item{dist}{Character string specifying the parametric survival distribution.
@@ -348,7 +366,12 @@ This package is modelled on the user-written \code{survsim} package
 
 }
 \references{
-Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
+Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. (2020)
+  Simulating survival data using the simsurv R package. \emph{Journal
+  of Statistical Software} \strong{96}(9), 1--27.
+  \doi{10.18637/jss.v097.i03}.
+
+  Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
   complex survival data. \emph{Statistics in Medicine} \strong{32},
   4118--4134. \doi{10.1002/sim.5823}
 
@@ -364,5 +387,5 @@ Crowther MJ, and Lambert PC. (2013) Simulating biologically plausible
   \url{http://www.stata-journal.com/sjpdf.html?articlenum=st0275}
 }
 \author{
-Sam Brilleman (\email{sam.brilleman@monash.edu})
+Sam Brilleman (\email{sam.brilleman@gmail.com})
 }
