@@ -21,7 +21,7 @@ Description: Simulate survival times from standard parametric survival
     If the user wishes to provide a user-defined
     hazard or log hazard function then this is possible, and the resulting
     cumulative hazard function does not need to have a closed-form solution.
-    For details see the supporting JSS paper <doi:10.18637/jss.v097.i03>.
+    For details see the supporting paper <doi:10.18637/jss.v097.i03>.
     Note that this package is modelled on the 'survsim' package available in
     the 'Stata' software (see Crowther and Lambert (2012)
     <http://www.stata-journal.com/sjpdf.html?articlenum=st0275> or
@@ -37,6 +37,7 @@ Suggests:
     eha (>= 2.4.5),
     flexsurv (>= 1.1.0),
     knitr (>= 1.15.1),
+    markdown,
     MASS,
     rstpm2 (>= 1.4.1),
     survival (>= 2.40.1),
