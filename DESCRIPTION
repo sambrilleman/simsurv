@@ -37,8 +37,8 @@ Suggests:
     eha (>= 2.4.5),
     flexsurv (>= 1.1.0),
     knitr (>= 1.15.1),
-    markdown,
     MASS,
+    rmarkdown,
     rstpm2 (>= 1.4.1),
     survival (>= 2.40.1),
     testthat (>= 1.0.2)
