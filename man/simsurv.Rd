@@ -366,7 +366,7 @@ This package is modelled on the user-written \code{survsim} package
 
 }
 \references{
-Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. (2020)
+Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ. (2021)
   Simulating survival data using the simsurv R package. \emph{Journal
   of Statistical Software} \strong{96}(9), 1--27.
   \doi{10.18637/jss.v097.i03}.
