@@ -236,8 +236,9 @@ GitHub](https://github.com/sambrilleman/simsurv/issues).
 
 1.  Brilleman SL, Wolfe R, Moreno-Betancur M, and Crowther MJ.
     Simulating survival data using the simsurv R package. *Journal of
-    Statistical Software* 2020; **96**(9), 1–27.
-    <doi:10.18637/jss.v097.i03>
+    Statistical Software* 2021; **96**(9), 1–27.
+    <doi:10.18637/jss.v097.i03>.
+    <https://www.jstatsoft.org/article/view/v097i03>
 
 2.  Crowther MJ, and Lambert PC. Simulating biologically plausible
     complex survival data. *Statistics in Medicine* 2013; **32**,
@@ -252,4 +253,4 @@ GitHub](https://github.com/sambrilleman/simsurv/issues).
 
 5.  Crowther MJ, and Lambert PC. Simulating complex survival data. *The
     Stata Journal* 2012; **12**(4), 674–687.
-    <http://www.stata-journal.com/sjpdf.html?articlenum=st0275>
+    <https://www.stata-journal.com/sjpdf.html?articlenum=st0275>
