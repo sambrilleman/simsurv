@@ -1,3 +1,10 @@
+### simsurv 1.0.0-9999 (X/X/XXXX)
+ 
+#### New features
+   * Current development version
+
+---
+
 ### simsurv 1.0.0 (9/1/2021)
  
 #### New features
