@@ -1,8 +1,8 @@
 Package: simsurv
 Type: Package
 Title: Simulate Survival Data
-Version: 1.0.1
-Date: 2026-01-21
+Version: 1.0.1.9000
+Date: 2026-01-22
 Authors@R: c(person("Sam", "Brilleman", email = "sam.brilleman@gmail.com",
                     role = c("cre", "aut", "cph")),
              person("Alessandro", "Gasparini", email = "ag475@leicester.ac.uk",
